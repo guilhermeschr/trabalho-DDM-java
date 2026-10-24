@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Achados e Perdidos</string>
+    <string name="login_title">Entrar</string>
+    <string name="register_title">Criar conta</string>
+    <string name="email">E-mail</string>
+    <string name="password">Senha</string>
+    <string name="confirm_password">Confirmar senha</string>
+    <string name="name">Nome ou nome do estabelecimento</string>
+    <string name="common">Usuário comum</string>
+    <string name="collection">Ponto de coleta</string>
+    <string name="address">Endereço do ponto</string>
+    <string name="choose_location">Selecionar localização no mapa</string>
+    <string name="save">Salvar cadastro</string>
+    <string name="back">Voltar ao login</string>
+    <string name="logout">Sair</string>
+    <string name="map_title">Toque no mapa para marcar o ponto de coleta</string>
+    <string name="confirm_location">Confirmar localização</string>
+    <string name="location_selected">Local selecionado: %1$.5f, %2$.5f</string>
+    <string name="welcome">Olá, %1$s</string>
+    <string name="home_description">Sua conta está pronta. As funcionalidades de objetos e pontos de coleta serão adicionadas nas próximas etapas.</string>
+    <string name="complete_profile">Concluir cadastro</string>
+    <string name="map_missing">Configure MAPS_API_KEY no arquivo local.properties e recompile para utilizar o mapa.</string>
+</resources>

@@ -4,15 +4,15 @@ Documento principal de requisitos do repositório. Consulte este arquivo para de
 
 **Disciplina:** Desenvolvimento para Dispositivos Móveis (DDM)
 
-**Data:** 19/10/2026
+**Data:** 23/10/2026
 
-**Versão:** 1.0 — requisitos da primeira versão
+**Versão:** 1.1 — MVVM, cache Room e câmera
 
 ## 1. Objetivo
 
 Desenvolver um aplicativo Android em Java que ajude pessoas a localizar objetos encontrados e retirá-los em pontos de coleta. O app permite publicar objetos, pesquisar os disponíveis, consultar localizações e registrar a entrega ao responsável pela retirada.
 
-Este documento é a referência para implementar e apresentar o trabalho da faculdade. O escopo prioriza um fluxo completo e simples, usando Firebase para autenticação e armazenamento e Google Maps para os mapas.
+Este documento é a referência para implementar e apresentar o trabalho da faculdade. O escopo prioriza um fluxo completo e simples, usando Firebase para autenticação e armazenamento, Room para cache local, Google Maps para os mapas e câmera para fotografar objetos encontrados.
 
 Neste documento, **objeto encontrado** é o anúncio de um item que alguém encontrou. **Ponto de coleta** é o estabelecimento que guarda esse objeto e realiza a entrega. O local onde o objeto foi encontrado pode ser diferente do local de retirada.
 
@@ -41,7 +41,7 @@ O acesso às funcionalidades exige login. Quando este documento mencionar inform
 | RF01 | Cadastrar usuário comum com nome, e-mail e senha. | Com dados válidos e e-mail não utilizado, a conta é criada com perfil de usuário comum e permite acessar o app. |
 | RF02 | Cadastrar ponto de coleta com nome do estabelecimento, e-mail, senha, endereço e localização no mapa. | Após concluir o cadastro, o estabelecimento aparece na lista de pontos e a conta acessa as funções do seu perfil. |
 | RF03 | Permitir login por e-mail e senha e saída da conta para os dois perfis. | Credenciais válidas abrem o app; credenciais inválidas exibem uma mensagem; após sair, telas protegidas exigem novo login. |
-| RF04 | Cadastrar um objeto encontrado. | Um usuário comum consegue salvar nome, descrição, localização aproximada em texto e coordenadas, ponto de retirada e fotos opcionais. O objeto fica disponível após o cadastro ser confirmado. |
+| RF04 | Cadastrar um objeto encontrado. | Um usuário comum consegue salvar nome, descrição, localização aproximada em texto e coordenadas, ponto de retirada e fotos opcionais, capturadas pela câmera ou selecionadas na galeria. O objeto fica disponível após o cadastro ser confirmado. |
 | RF05 | Listar os objetos disponíveis. | A lista mostra nome, local aproximado em texto, nome do ponto de retirada e uma foto quando existir; objetos entregues não aparecem. |
 | RF06 | Pesquisar objetos pelo nome. | A busca retorna os objetos disponíveis cujo nome contém o texto informado, sem diferenciar maiúsculas e minúsculas. Texto vazio mantém a lista sem restrição por nome. |
 | RF07 | Filtrar objetos por ponto de coleta. | Ao selecionar um ponto, somente seus objetos disponíveis aparecem. Busca e filtro podem ser combinados, e remover o filtro volta a considerar todos os pontos. |
@@ -52,6 +52,8 @@ O acesso às funcionalidades exige login. Quando este documento mencionar inform
 | RF12 | Atualizar a situação após a entrega. | Após a gravação confirmada, o objeto fica entregue, sai das buscas de disponíveis e permanece no histórico do ponto. |
 | RF13 | Consultar o histórico e os comprovantes das próprias entregas. | O ponto abre um objeto entregue e consulta os dados do objeto, a descrição, as fotos e a data/hora da retirada. Outros usuários e pontos não acessam os comprovantes. |
 | RF14 | Selecionar localizações manualmente no mapa. | No cadastro de objeto e de ponto, o usuário consegue marcar e ajustar uma posição sem conceder acesso à localização atual do celular. |
+| RF15 | Fotografar um objeto encontrado usando a câmera do celular. | No cadastro do objeto, o usuário pode abrir a câmera, confirmar a foto e anexá-la ao anúncio; cancelar a captura mantém o formulário e não cria anexo. |
+| RF16 | Manter cache local com Room. | Perfis confirmados são armazenados localmente nesta etapa; os módulos de consulta deverão armazenar objetos disponíveis e pontos já carregados. O cache nunca autentica usuários, armazena senhas ou autoriza entregas. |
 
 ## 4. Regras de negócio
 
@@ -96,7 +98,7 @@ A navegação oferece acesso a objetos disponíveis, pontos de coleta e saída d
 1. O usuário comum cria sua conta ou faz login.
 2. Depois de deixar o item em um ponto cadastrado, abre o cadastro de objeto.
 3. Preenche os dados, marca onde encontrou o objeto e escolhe o ponto de retirada.
-4. Se desejar, seleciona fotos do objeto pela galeria do celular.
+4. Se desejar, fotografa o objeto com a câmera ou seleciona fotos pela galeria do celular.
 5. O app valida e salva o cadastro. Quando confirmado, o objeto aparece como disponível.
 6. Outro usuário autenticado pesquisa, filtra e abre os detalhes para identificar o item e consultar onde retirá-lo.
 
@@ -127,13 +129,21 @@ As fotos ficam no Cloud Storage, separando fotos de anúncios e comprovantes de 
 
 | Tecnologia | Uso no projeto | Referência oficial |
 | --- | --- | --- |
-| Android com Java e layouts XML | Telas, navegação, formulários e regras de apresentação. | Organização adotada para este trabalho. |
+| Android com Java, layouts XML e MVVM | Uma Activity hospeda Fragments. ViewModels expõem estado via LiveData e delegam operações aos repositórios. Componentes Material padrão compõem a interface. | [Arquitetura Android](https://developer.android.com/topic/architecture) |
+| Room | Cache local de perfis confirmados e, nas próximas etapas, objetos e pontos consultados. Firebase continua sendo a fonte de verdade; sem fila de alterações offline. | [Room](https://developer.android.com/training/data-storage/room) |
+| Câmera | Captura de foto do objeto encontrado, com arquivo privado e compartilhamento por FileProvider quando necessário. | [Captura de fotos](https://developer.android.com/media/camera/camera-deprecated/photobasics) |
 | Firebase Authentication | Cadastro e login com e-mail e senha. | [Autenticação por senha no Android](https://firebase.google.com/docs/auth/android/password-auth) |
 | Cloud Firestore | Usuários, pontos, objetos e entregas; transação para registrar a entrega e alterar a situação juntas. | [Transações e gravações em lote](https://firebase.google.com/docs/firestore/manage-data/transactions) |
 | Cloud Storage for Firebase | Fotos opcionais dos anúncios e fotos obrigatórias das entregas. | [Upload de arquivos no Android](https://firebase.google.com/docs/storage/android/upload-files) |
 | Google Maps SDK for Android | Seleção e visualização das posições com marcadores. | [Visão geral do Maps SDK](https://developers.google.com/maps/documentation/android-sdk/overview) |
 
-O aplicativo acessa os serviços pelos SDKs, sem servidor próprio. A implementação pode separar telas, modelos de dados e classes de acesso ao Firebase, mantendo o código simples e evitando concentrar tudo em uma única Activity.
+O aplicativo acessa os serviços pelos SDKs, sem servidor próprio. O padrão MVVM é obrigatório: Fragments exibem os formulários e observam LiveData; AuthViewModel valida entradas e coordena estados; AuthRepository encapsula Firebase Authentication, Firestore e cache Room. As telas não acessam Firebase diretamente. Uma única Activity hospeda os Fragments, e senhas não são armazenadas em Room, arquivos, logs ou estado persistido de telas.
+
+O login somente libera a área autenticada após confirmar o perfil no servidor. Se a conta existir no Authentication e o documento de perfil ainda não existir no Firestore, o usuário é direcionado para concluir o cadastro sem criar outra conta. Usuário e ponto são gravados juntos por lote no Firestore. O cadastro valida confirmação de senha e um mínimo inicial de seis caracteres; a política do Firebase pode exigir mais. Ao sair, a sessão é encerrada e o cache do perfil é apagado.
+
+Na primeira etapa, Room mantém o perfil confirmado, com acesso ao banco fora da thread principal. O cache de objetos e pontos será adicionado com as respectivas telas; conteúdo local deverá ser identificado como potencialmente desatualizado e nunca permitirá entregas offline. Os dados de autorização continuam dependendo de confirmação no servidor.
+
+O pacote Android é `br.edu.ddm.achadoseperdidos`, com Android mínimo 7.0 (API 24), compilação/alvo API 35 e Java 17. As telas usam o tema padrão Material 3 e Fragments, sem personalização visual complexa.
 
 Para o volume pequeno da demonstração, a busca por nome pode ser feita no app sobre os objetos disponíveis carregados. O filtro por ponto deve produzir o mesmo resultado quando combinado com essa busca. Não é necessário contratar um serviço de busca.
 
@@ -191,6 +201,8 @@ Usar na demonstração pelo menos um usuário comum, dois pontos de coleta e obj
 | CA08 — Acesso indevido | Tentar entregar e ler comprovantes usando usuário comum ou outro ponto, incluindo acesso direto aos serviços. | Firestore e Storage negam as operações não autorizadas. | RF13, RNF04 |
 | CA09 — Repetição e concorrência | Tocar duas vezes em entregar ou enviar por duas sessões do mesmo ponto. | Somente uma entrega é persistida; a situação final é entregue. | RF11–RF12 |
 | CA10 — Erros e ausência de dados | Testar cadastro inválido, lista sem pontos, busca vazia, falha de carregamento e falha do mapa. | Validações e mensagens seguem a seção 9; dados já preenchidos são preservados durante a tentativa. | RF01–RF09, RNF05 |
+| CA11 — Câmera | Abrir a câmera no cadastro de objeto, confirmar uma foto e depois cancelar outra captura. | A foto confirmada é anexada; cancelar não adiciona arquivo nem apaga o formulário. | RF15 |
+| CA12 — Cache local | Carregar dados, consultar o cache Room, encerrar sessão e tentar autenticar sem rede. | Dados confirmados são persistidos; o perfil em cache é apagado na saída e não libera login offline. | RF16 |
 
 ## 12. Lista de verificação para o desenvolvimento
 
@@ -204,12 +216,28 @@ Usar na demonstração pelo menos um usuário comum, dois pontos de coleta e obj
 - [ ] RF13: histórico com comprovantes privados.
 - [ ] RNF01–RNF06: interface, persistência, permissões e feedback.
 - [ ] Seção 9: validações, estados vazios e tratamento de falhas.
-- [ ] CA01–CA10: execução e registro dos resultados dos cenários de aceite.
+- [ ] RF15: captura pela câmera no cadastro do objeto.
+- [ ] RF16: cache Room de objetos e pontos, além do perfil.
+- [ ] CA01–CA12: execução e registro dos resultados dos cenários de aceite.
 
 ## 13. Limites da primeira versão
 
-Não fazem parte deste trabalho: anúncios de objetos perdidos, chat, notificações, reservas, aprovação administrativa de pontos, confirmação de recebimento pelo ponto, transferência de objetos, edição ou exclusão de anúncios, troca de perfil, cadastro de múltiplos estabelecimentos na mesma conta, login social, recuperação de senha pelo app, mapa geral de anúncios, rotas, busca por distância ou modo offline completo.
+Não fazem parte deste trabalho: anúncios de objetos perdidos, chat, notificações, reservas, aprovação administrativa de pontos, confirmação de recebimento pelo ponto, transferência de objetos, edição ou exclusão de anúncios, troca de perfil, cadastro de múltiplos estabelecimentos na mesma conta, login social, recuperação de senha pelo app, mapa geral de anúncios, rotas, busca por distância ou modo offline completo com sincronização de escritas.
 
-A seleção de fotos será feita pela galeria do celular; uma câmera integrada ao aplicativo não é necessária. A conferência de que a pessoa pode retirar o item acontece presencialmente pelo ponto; o app registra a entrega, sem reconhecimento automático de identidade.
+O cadastro de objeto oferecerá captura pela câmera e seleção pela galeria. Os comprovantes de entrega continuam sendo selecionados pela galeria; a câmera exigida pelo trabalho será usada para fotografar o objeto encontrado. A conferência de que a pessoa pode retirar o item acontece presencialmente pelo ponto; o app registra a entrega, sem reconhecimento automático de identidade.
 
-O nome definitivo do aplicativo e seu estilo visual podem ser definidos durante o desenvolvimento, sem alterar estes requisitos. Esta entrega contém somente o documento base; não inclui código do aplicativo ou configuração de serviços externos.
+O nome definitivo do aplicativo e seu estilo visual podem ser definidos durante o desenvolvimento, sem alterar estes requisitos. O desenvolvimento foi iniciado com o projeto Android, login, cadastro e estrutura de cache de perfil. Recursos ainda não concluídos permanecem no checklist. A configuração e publicação dos serviços externos dependem do projeto Firebase e das chaves do responsável.
+
+
+## 14. Atendimento ao enunciado T1 e andamento
+
+O enunciado exige seis telas, navegação por Fragments com Bottom Navigation ou Drawer, duas listas de contextos distintos, MVVM, duas opções de persistência/integração e dois recursos da lista do trabalho. O app atenderá com listas de objetos e pontos (RecyclerView e Adapter), Firebase + Room e Google Maps + câmera. A navegação principal com Bottom Navigation será adicionada junto dessas listas; esta etapa entrega os Fragments de autenticação e início.
+
+Implementado nesta etapa: estrutura Gradle importável no Android Studio, login e cadastro dos dois perfis, validações, estados de carregamento/erro, encerramento de sessão, retomada de perfil incompleto, seleção do ponto no mapa e armazenamento local do perfil. A área inicial autenticada é provisória; não representa as listas prontas. Testes com Firebase real e Maps dependem das configurações descritas no README. Câmera e cache de objetos/pontos são requisitos definidos, ainda pendentes de implementação.
+
+## 15. Histórico de alterações
+
+| Versão | Data | Alteração |
+| --- | --- | --- |
+| 1.0 | 19/10/2026 | Definição inicial dos requisitos de Achados e Perdidos. |
+| 1.1 | 23/10/2026 | Adoção obrigatória de MVVM e Material padrão; inclusão de câmera para objetos e Room para cache; início de login e cadastro; mapeamento dos critérios do T1. |
