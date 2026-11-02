@@ -28,6 +28,31 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/usuarios/$(uid)).data.nome == request.resource.data.nome;
       allow update, delete: if false;
     }
+    match /objetos/{id} {
+      function signedIn() { return request.auth != null; }
+      function commonUser() {
+        return signedIn() && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil == 'COMUM';
+      }
+      function validText(value) { return value is string && value.size() > 0 && value.matches('(?s).*\\S.*'); }
+      allow list: if signedIn() && resource.data.situacao == 'DISPONIVEL';
+      // A leitura de ID ausente permite a transação de criação sem escrita offline.
+      allow get: if signedIn() && (!exists(/databases/$(database)/documents/objetos/$(id)) || resource.data.situacao == 'DISPONIVEL');
+      allow create: if commonUser()
+        && request.resource.data.keys().hasAll(['nome', 'descricao', 'localAproximado', 'latitude', 'longitude', 'pontoId', 'autorUid', 'situacao', 'fotos', 'criadoEm'])
+        && request.resource.data.keys().hasOnly(['nome', 'descricao', 'localAproximado', 'latitude', 'longitude', 'pontoId', 'autorUid', 'situacao', 'fotos', 'criadoEm'])
+        && validText(request.resource.data.nome)
+        && validText(request.resource.data.descricao)
+        && validText(request.resource.data.localAproximado)
+        && request.resource.data.autorUid == request.auth.uid
+        && request.resource.data.pontoId is string
+        && exists(/databases/$(database)/documents/pontosColeta/$(request.resource.data.pontoId))
+        && request.resource.data.latitude is number && request.resource.data.latitude >= -90 && request.resource.data.latitude <= 90
+        && request.resource.data.longitude is number && request.resource.data.longitude >= -180 && request.resource.data.longitude <= 180
+        && request.resource.data.situacao == 'DISPONIVEL'
+        && request.resource.data.fotos is list && request.resource.data.fotos.size() == 0
+        && request.resource.data.criadoEm == request.time;
+      allow update, delete: if false;
+    }
     match /{document=**} { allow read, write: if false; }
   }
 }

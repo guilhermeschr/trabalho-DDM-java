@@ -4,9 +4,9 @@ Documento principal de requisitos do repositório. Consulte este arquivo para de
 
 **Disciplina:** Desenvolvimento para Dispositivos Móveis (DDM)
 
-**Data:** 23/10/2026
+**Data:** 02/11/2026
 
-**Versão:** 1.1 — MVVM, cache Room e câmera
+**Versão:** 1.4 — Pontos, objetos e navegação principal
 
 ## 1. Objetivo
 
@@ -89,7 +89,7 @@ O acesso às funcionalidades exige login. Quando este documento mencionar inform
 
 A seleção de localização pode ser uma tela reutilizada ou um componente dos formulários. Cada mapa de detalhes deve permitir visualizar e explorar a posição marcada. A primeira versão não exige mapa geral com todos os anúncios, cálculo de distância ou rotas.
 
-A navegação oferece acesso a objetos disponíveis, pontos de coleta e saída da conta. O perfil de ponto também possui acesso a “Meus objetos”.
+A navegação implementada usa Bottom Navigation com Objetos, Pontos e Conta (perfil e saída). Detalhes e cadastro abrem em Fragments internos com retorno à lista. O acesso “Meus objetos” será adicionado com o inventário do ponto.
 
 ## 6. Fluxos principais
 
@@ -143,7 +143,7 @@ O login somente libera a área autenticada após confirmar o perfil no servidor.
 
 Na primeira etapa, Room mantém o perfil confirmado, com acesso ao banco fora da thread principal. O cache de objetos e pontos será adicionado com as respectivas telas; conteúdo local deverá ser identificado como potencialmente desatualizado e nunca permitirá entregas offline. Os dados de autorização continuam dependendo de confirmação no servidor.
 
-O pacote Android é `br.edu.ddm.achadoseperdidos`, com Android mínimo 7.0 (API 24), compilação/alvo API 35 e Java 17. As telas usam o tema padrão Material 3 e Fragments, sem personalização visual complexa.
+O identificador Android (`applicationId`) é `trabalho.DDM.java`, compatível com o arquivo Firebase fornecido. O namespace das classes Java permanece `br.edu.ddm.achadoseperdidos`, com Android mínimo 7.0 (API 24), compilação/alvo API 35 e Java 17. As telas usam o tema padrão Material 3 e Fragments, sem personalização visual complexa.
 
 Para o volume pequeno da demonstração, a busca por nome pode ser feita no app sobre os objetos disponíveis carregados. O filtro por ponto deve produzir o mesmo resultado quando combinado com essa busca. Não é necessário contratar um serviço de busca.
 
@@ -207,10 +207,10 @@ Usar na demonstração pelo menos um usuário comum, dois pontos de coleta e obj
 ## 12. Lista de verificação para o desenvolvimento
 
 - [ ] RF01–RF03: cadastro dos dois perfis, login e saída.
-- [ ] RF02 e RF09: cadastro, listagem e detalhes dos pontos.
-- [ ] RF04: cadastro de objeto com ponto obrigatório e fotos opcionais.
-- [ ] RF05–RF07: lista de disponíveis, busca e filtro combinados.
-- [ ] RF08 e RF14: detalhes, seleção de posições e mapas.
+- [x] RF02 e RF09: código de cadastro, listagem e detalhes dos pontos; validação completa do mapa no aparelho ainda pendente.
+- [ ] RF04: cadastro sem fotos implementado com ponto obrigatório; anexos de fotos ainda pendentes.
+- [x] RF05–RF07: lista de disponíveis, busca e filtro combinados (anúncios sem fotos nesta etapa).
+- [x] RF08 e RF14: código de detalhes, seleção de posições e mapas para objetos e pontos, sem fotos; carregamento real dos mapas ainda pendente de validação.
 - [ ] RF10: inventário do próprio ponto separado por situação.
 - [ ] RF11–RF12: entrega com descrição, foto obrigatória e atualização consistente.
 - [ ] RF13: histórico com comprovantes privados.
@@ -231,9 +231,23 @@ O nome definitivo do aplicativo e seu estilo visual podem ser definidos durante 
 
 ## 14. Atendimento ao enunciado T1 e andamento
 
-O enunciado exige seis telas, navegação por Fragments com Bottom Navigation ou Drawer, duas listas de contextos distintos, MVVM, duas opções de persistência/integração e dois recursos da lista do trabalho. O app atenderá com listas de objetos e pontos (RecyclerView e Adapter), Firebase + Room e Google Maps + câmera. A navegação principal com Bottom Navigation será adicionada junto dessas listas; esta etapa entrega os Fragments de autenticação e início.
+O enunciado exige seis telas, navegação por Fragments com Bottom Navigation ou Drawer, duas listas de contextos distintos, MVVM, duas opções de persistência/integração e dois recursos da lista do trabalho. O app atenderá com listas de objetos e pontos (RecyclerView e Adapter), Firebase + Room e Google Maps + câmera. A navegação principal com Bottom Navigation está implementada, com listas de objetos e pontos em RecyclerView e Adapter, além da aba Conta.
 
-Implementado nesta etapa: estrutura Gradle importável no Android Studio, login e cadastro dos dois perfis, validações, estados de carregamento/erro, encerramento de sessão, retomada de perfil incompleto, seleção do ponto no mapa e armazenamento local do perfil. A área inicial autenticada é provisória; não representa as listas prontas. Testes com Firebase real e Maps dependem das configurações descritas no README. Câmera e cache de objetos/pontos são requisitos definidos, ainda pendentes de implementação.
+Implementado nesta etapa: estrutura Gradle importável no Android Studio, login e cadastro dos dois perfis, validações, estados de carregamento/erro, encerramento de sessão, retomada de perfil incompleto, seleção do ponto no mapa e armazenamento local do perfil. A área autenticada contém listas e detalhes de pontos e objetos disponíveis, busca por nome sem diferenciar maiúsculas, filtro combinado por ponto e cadastro de objeto sem fotos nesta etapa. O arquivo Firebase fornecido foi instalado localmente e o applicationId foi ajustado ao app registrado no projeto `trabalho-ddm-java`. Authentication por e-mail/senha está habilitado e o Firestore padrão foi criado em `southamerica-east1` (São Paulo), no plano Spark. As regras existentes em `firestore.rules` foram publicadas com autorização do responsável. Build, 20 testes unitários e lint passaram (zero erros de lint). Em 02/11/2026, cadastro de usuário comum, saída e novo login foram validados no emulador com Firebase real, usando uma conta fictícia de teste. O app exibiu o nome e o perfil corretos após o cadastro, voltou à tela de login na saída e recuperou o mesmo perfil após entrar novamente. Cadastro de ponto e mapa continuam pendentes de validação. A chave do Maps fornecida foi adicionada em `local.properties`, fora do versionamento. O carregamento do mapa no aparelho ainda precisa ser validado, incluindo habilitação do Maps SDK for Android e restrições da chave no Google Cloud. Câmera e cache de objetos/pontos são requisitos definidos, ainda pendentes de implementação.
+
+Verificação das regras em 02/11/2026: no simulador do console, leitura de perfil sem autenticação foi negada e leitura do próprio perfil com UID correspondente foi permitida. Essas simulações não criam contas ou dados e não substituem o teste completo do aplicativo.
+
+### Etapa de pontos, objetos e navegação — 02/11/2026
+
+Quatro módulos implementados: lista/detalhes de pontos; cadastro de objeto sem fotos; lista/detalhes de objetos com busca e filtro combinados; navegação principal. Fragments compartilham CatalogViewModel por sessão da área autenticada e usam CatalogRepository para acessar o Firestore. As listas consultam o servidor ao entrar na área, trocar de aba, tocar em Atualizar ou salvar um objeto. Falhas são distintas de ausência de dados; há nova tentativa. O cadastro exige perfil COMUM, nome, descrição, local em texto, coordenadas válidas e ponto existente. A orientação de deixar o objeto no ponto aparece no formulário. Sem pontos, não permite publicar. O formulário mantém os textos durante tentativas e a rotação; coordenadas ficam no ViewModel durante a sessão.
+
+Objetos são gravados em `objetos/{id}` com `nome`, `descricao`, `localAproximado`, `latitude`, `longitude`, `pontoId`, `autorUid`, `situacao`, `fotos` (lista vazia nesta etapa) e `criadoEm`. A criação usa transação online e reutiliza o ID em uma repetição após falha, evitando anúncios duplicados. A lista consulta somente `DISPONIVEL`; pesquisa e filtro são aplicados juntos sobre os objetos carregados. Os detalhes mostram texto, coordenadas e acesso ao mapa do encontro; o ponto de retirada abre seus próprios detalhes e mapa. O mapa de detalhes permite explorar, mas não alterar o registro. As telas de mapa reutilizam MapPickerDialog, mantendo os textos visíveis fora do mapa.
+
+As novas regras permitem criação somente por usuário COMUM com autor correspondente, ponto existente, campos válidos, data do servidor e situação DISPONIVEL. Leitura exige autenticação e objetos disponíveis; alteração, exclusão e entregas permanecem bloqueadas. As regras foram verificadas em 19 cenários nos emuladores oficiais do Firebase, sem dados de produção. As novas regras foram publicadas no projeto real `trabalho-ddm-java` em 02/11/2026, após confirmação do responsável.
+
+Verificações: compilação e lint concluídos sem erros; 32 testes unitários passaram, incluindo combinação de busca/filtro, permissões de perfil, ponto inexistente, validações, reenvio e falhas de rede. Fotos, Storage, inventário, entregas, histórico e cache Room de objetos/pontos continuam pendentes. RF04/RF08 permanecem parciais quanto às fotos; o escopo final dos requisitos foi preservado.
+
+Verificação após publicação em 02/11/2026: a lista de objetos carregou sem erro no Firebase real (sem anúncios), a lista de pontos exibiu o ponto de teste existente e seus detalhes abriram corretamente. O formulário de objeto foi inspecionado e impediu envio com nome vazio. O mapa abriu, mas não carregou: o SDK registrou Authorization failure para a chave configurada. A origem foi identificada na conta de trabalhos indicada pelo responsável: projeto gmp-demo-project-991730262 (Maps Platform Demo Project), chave Maps Platform Demo API Key. Foi confirmado que o valor corresponde à chave instalada localmente. Trata-se de uma Maps Demo Key, autorizada para sete APIs, sem Maps SDK for Android. Conforme a documentação oficial (https://developers.google.com/maps/demo-key), serviços fora do conjunto de demonstração exigem vincular uma conta de faturamento ou usar uma chave padrão com faturamento. A configuração financeira depende do responsável; não foi alterada. Após obter uma chave habilitada para Android, conferir o pacote trabalho.DDM.java e a assinatura de desenvolvimento. A publicação completa de um objeto pelo formulário não foi validada nesta verificação.
 
 ## 15. Histórico de alterações
 
@@ -241,3 +255,6 @@ Implementado nesta etapa: estrutura Gradle importável no Android Studio, login 
 | --- | --- | --- |
 | 1.0 | 19/10/2026 | Definição inicial dos requisitos de Achados e Perdidos. |
 | 1.1 | 23/10/2026 | Adoção obrigatória de MVVM e Material padrão; inclusão de câmera para objetos e Room para cache; início de login e cadastro; mapeamento dos critérios do T1. |
+| 1.2 | 02/11/2026 | Instalação local do JSON fornecido, ajuste do applicationId para `trabalho.DDM.java`, confirmação do login por e-mail/senha, criação do Firestore em São Paulo e publicação das regras existentes; Maps pendente de chave. |
+| 1.3 | 02/11/2026 | Chave do Google Maps fornecida instalada em local.properties, sem versionamento; validação do mapa no aparelho pendente. |
+| 1.4 | 02/11/2026 | Listas e detalhes de pontos e objetos, cadastro de objeto sem fotos, busca/filtro combinados, Bottom Navigation e regras de objetos testadas no emulador. |

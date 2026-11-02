@@ -15,7 +15,17 @@ import br.edu.ddm.achadoseperdidos.R;
 public class MapPickerDialog extends DialogFragment {
     private static final int MAP_ID = 0x123456;
     private LatLng selected;
+    public static MapPickerDialog create(Double latitude, Double longitude, boolean readOnly) {
+        MapPickerDialog dialog = new MapPickerDialog();
+        Bundle args = new Bundle(); args.putBoolean("readOnly", readOnly);
+        if (latitude != null && longitude != null) { args.putDouble("lat", latitude); args.putDouble("lng", longitude); }
+        dialog.setArguments(args); return dialog;
+    }
     @NonNull @Override public Dialog onCreateDialog(Bundle saved) {
+        boolean readOnly = getArguments() != null && getArguments().getBoolean("readOnly");
+        if (saved == null && getArguments() != null && getArguments().containsKey("lat")) {
+            selected = new LatLng(getArguments().getDouble("lat"), getArguments().getDouble("lng"));
+        }
         if (saved != null && saved.containsKey("lat")) selected = new LatLng(saved.getDouble("lat"),saved.getDouble("lng"));
         boolean configured = false;
         try {
@@ -25,9 +35,9 @@ public class MapPickerDialog extends DialogFragment {
         if (!configured) return new MaterialAlertDialogBuilder(requireContext()).setMessage(R.string.map_missing).setPositiveButton(android.R.string.ok,null).create();
         FrameLayout frame = new FrameLayout(requireContext()); frame.setId(MAP_ID);
         frame.setMinimumHeight((int)(360 * getResources().getDisplayMetrics().density));
-        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.map_title).setView(frame)
-            .setNegativeButton(android.R.string.cancel,null).setPositiveButton(R.string.confirm_location, (d,w) -> {
-                if (selected == null) return;
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext()).setTitle(readOnly ? R.string.view_map : R.string.map_choose_title).setView(frame)
+            .setNegativeButton(android.R.string.cancel,null).setPositiveButton(readOnly ? android.R.string.ok : R.string.confirm_location, (d,w) -> {
+                if (selected == null || readOnly) return;
                 Bundle result = new Bundle(); result.putDouble("lat", selected.latitude); result.putDouble("lng", selected.longitude);
                 getParentFragmentManager().setFragmentResult("location", result);
             }).create();
@@ -38,7 +48,7 @@ public class MapPickerDialog extends DialogFragment {
             map.getMapAsync(google -> {
                 google.moveCamera(CameraUpdateFactory.newLatLngZoom(selected == null ? new LatLng(-15.8,-47.9) : selected, selected == null ? 4 : 15));
                 if (selected != null) google.addMarker(new MarkerOptions().position(selected));
-                google.setOnMapClickListener(position -> {
+                if (!readOnly) google.setOnMapClickListener(position -> {
                     selected = position; google.clear(); google.addMarker(new MarkerOptions().position(position));
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
                 });

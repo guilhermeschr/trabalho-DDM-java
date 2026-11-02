@@ -7,7 +7,7 @@ android {
     namespace 'br.edu.ddm.achadoseperdidos'
     compileSdk 35
     defaultConfig {
-        applicationId 'br.edu.ddm.achadoseperdidos'
+        applicationId 'trabalho.DDM.java'
         minSdk 24
         targetSdk 35
         versionCode 1
@@ -23,6 +23,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.fragment:fragment:1.8.5'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
     implementation 'androidx.lifecycle:lifecycle-viewmodel:2.8.7'
     implementation 'androidx.lifecycle:lifecycle-livedata:2.8.7'
     implementation platform('com.google.firebase:firebase-bom:33.7.0')

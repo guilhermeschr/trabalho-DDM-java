@@ -39,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
             @Override public void handleOnBackPressed() {
                 AuthState state = model.state().getValue();
                 if (state.loading) return;
+                androidx.fragment.app.Fragment current = getSupportFragmentManager().findFragmentById(R.id.container);
+                if (current instanceof HomeFragment && ((HomeFragment) current).handleBack()) return;
                 if (state.screen == AuthState.Screen.REGISTER) model.showLogin();
                 else finish();
             }
