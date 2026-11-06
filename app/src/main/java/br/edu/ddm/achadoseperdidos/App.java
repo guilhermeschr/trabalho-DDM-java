@@ -14,6 +14,8 @@ public class App extends Application {
     private CatalogRepository catalog;
     @Override public void onCreate() {
         super.onCreate();
+        java.io.File[] abandoned = new java.io.File(getCacheDir(), "object_photos").listFiles();
+        if (abandoned != null) for (java.io.File file : abandoned) file.delete();
         AppDatabase db = Room.databaseBuilder(this, AppDatabase.class, "achados-cache.db").build();
         if (FirebaseApp.initializeApp(this) == null) {
             auth = new UnconfiguredAuthRepository(); catalog = new UnconfiguredCatalogRepository();

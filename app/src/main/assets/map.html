@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <style>html, body, #map { margin: 0; width: 100%; height: 100%; background: #f5f5f5; }</style>
+</head>
+<body>
+<div id="map" role="region" aria-label="Mapa de localização"></div>
+<script>
+  'use strict';
+  let initialized = false;
+  let failed = false;
+  let ready = false;
+  let timer;
+  let acceptsCurrentLocation = true;
+  function send(message) {
+    if (window.MapHost) window.MapHost.postMessage(JSON.stringify(message));
+  }
+  function fail() {
+    failed = true;
+    ready = false;
+    clearTimeout(timer);
+    send({type: 'error'});
+  }
+  window.gm_authFailure = fail;
+  window.initializeMap = function (config) {
+    if (initialized) return;
+    initialized = true;
+    timer = setTimeout(fail, 25000);
+    window.beginCurrentLocationRequest = function () { acceptsCurrentLocation = true; };
+    window.mapLoaded = function () {
+      if (failed) return;
+      try {
+        const selected = Number.isFinite(config.lat) && Number.isFinite(config.lng);
+        const position = selected ? {lat: config.lat, lng: config.lng} : {lat: -15.8, lng: -47.9};
+        const map = new google.maps.Map(document.getElementById('map'), {
+          center: position, zoom: selected ? 15 : 4,
+          streetViewControl: false, fullscreenControl: false, mapTypeControl: false,
+          clickableIcons: false, gestureHandling: 'greedy', renderingType: 'RASTER'
+        });
+        let marker = selected ? new google.maps.Marker({position: position, map: map}) : null;
+        window.setCurrentLocation = function (lat, lng) {
+          if (config.readOnly || !ready || failed || !acceptsCurrentLocation
+              || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return false;
+          acceptsCurrentLocation = false;
+          const current = {lat: lat, lng: lng};
+          if (marker) marker.setPosition(current);
+          else marker = new google.maps.Marker({position: current, map: map});
+          map.setCenter(current);
+          map.setZoom(15);
+          send({type: 'selected', source: 'current', lat: lat, lng: lng});
+          return true;
+        };
+        google.maps.event.addListenerOnce(map, 'tilesloaded', function () {
+          if (failed) return;
+          clearTimeout(timer);
+          ready = true;
+          send({type: 'ready'});
+        });
+        if (!config.readOnly) map.addListener('click', function (event) {
+          if (!ready || failed || !event.latLng) return;
+          const lat = event.latLng.lat(), lng = event.latLng.lng();
+          if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
+          acceptsCurrentLocation = false;
+          if (marker) marker.setPosition(event.latLng);
+          else marker = new google.maps.Marker({position: event.latLng, map: map});
+          send({type: 'selected', lat: lat, lng: lng});
+        });
+      } catch (error) { fail(); }
+    };
+    const script = document.createElement('script');
+    script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(config.key)
+      + '&callback=mapLoaded&loading=async&language=pt-BR&region=BR&v=quarterly';
+    script.async = true;
+    script.onerror = fail;
+    document.head.appendChild(script);
+  };
+</script>
+</body>
+</html>

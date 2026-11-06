@@ -59,3 +59,27 @@ expect('entregas continuam privadas e bloqueadas',request(BASE+'/entregas/valido
 seed('objetos/historico',dict(valid,situacao='ENTREGUE'))
 expect('objeto entregue não pode ser lido neste módulo',request(BASE+'/objetos/historico',token=ut),False)
 print('Regras validadas no emulador; nenhum dado de produção foi alterado.')
+
+# Fotos fazem parte da mesma publicação, nunca de um upload posterior.
+def photo_commit(id, count, token, oversized=False, missing=False):
+ data=dict(valid, fotos=[str(i) for i in range(count)], miniaturaBase64='YQ==')
+ name=f'projects/{PROJECT}/databases/(default)/documents/objetos/{id}'
+ objfields=fields(data);objfields['fotos']={'arrayValue':{'values':[{'stringValue':str(i)} for i in range(count)]}}
+ writes=[{'update':{'name':name,'fields':objfields},'currentDocument':{'exists':False},'updateTransforms':[{'fieldPath':'criadoEm','setToServerValue':'REQUEST_TIME'}]}]
+ for i in range(0 if missing else count):
+  writes.append({'update':{'name':name+'/fotos/'+str(i),'fields':fields({'tipo':'image/jpeg','base64':'A'*136540 if oversized else 'YQ=='})},'currentDocument':{'exists':False}})
+ return request(BASE+':commit',{'writes':writes},token)
+expect('uma foto é publicada atomicamente',photo_commit('foto-uma',1,ut),True)
+expect('cinco fotos cabem nos limites das regras',photo_commit('foto-cinco',5,ut),True)
+expect('seis fotos são rejeitadas',photo_commit('foto-seis',6,ut),False)
+expect('foto declarada ausente impede anúncio',photo_commit('foto-ausente',1,ut,missing=True),False)
+expect('foto grande impede anúncio',photo_commit('foto-grande',1,ut,oversized=True),False)
+expect('outro autor não publica fotos',photo_commit('foto-autor',1,ot),False)
+expect('leitura autenticada da foto',request(BASE+'/objetos/foto-uma/fotos/0',token=ot),True)
+expect('leitura anônima da foto bloqueada',request(BASE+'/objetos/foto-uma/fotos/0'),False)
+expect('foto posterior bloqueada',request(BASE+'/objetos/valido/fotos/0',{'fields':fields({'tipo':'image/jpeg','base64':'YQ=='})},ut,'PATCH'),False)
+expect('foto órfã bloqueada',request(BASE+'/objetos/orfao/fotos/0',{'fields':fields({'tipo':'image/jpeg','base64':'YQ=='})},ut,'PATCH'),False)
+expect('editar foto bloqueado',request(BASE+'/objetos/foto-uma/fotos/0',{'fields':fields({'tipo':'image/jpeg','base64':'Yg=='})},ut,'PATCH'),False)
+expect('excluir foto bloqueado',request(BASE+'/objetos/foto-uma/fotos/0',token=ut,method='DELETE'),False)
+code,data=request(BASE+'/objetos/foto-grande',token=ut); assert code==404,(code,data)
+print('Fotos e anúncio não deixam publicação parcial.')

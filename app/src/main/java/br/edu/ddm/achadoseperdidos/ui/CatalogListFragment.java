@@ -39,7 +39,7 @@ public class CatalogListFragment extends Fragment {
                 if (points) for (CollectionPoint p : state.points) rows.add(new CatalogAdapter.Row(p.id, p.name, p.address));
                 else for (FoundObject o : model.filteredObjects()) {
                     CollectionPoint p = model.point(o.pointId);
-                    rows.add(new CatalogAdapter.Row(o.id, o.name, o.location + "\n" + (p == null ? getString(R.string.point_unavailable) : p.name)));
+                    rows.add(new CatalogAdapter.Row(o.id, o.name, o.location + "\n" + (p == null ? getString(R.string.point_unavailable) : p.name), o.thumbnail));
                 }
             }
             adapter.submit(rows);

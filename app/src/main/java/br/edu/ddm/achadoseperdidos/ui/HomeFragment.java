@@ -27,8 +27,9 @@ public class HomeFragment extends Fragment {
         }).get(CatalogViewModel.class);
         BottomNavigationView navigation = view.findViewById(R.id.bottom_navigation);
         navigation.setSelectedItemId(tab);
+        androidx.core.view.ViewCompat.requestApplyInsets(requireActivity().findViewById(R.id.container));
         navigation.setOnItemSelectedListener(item -> {
-            if (model.state().getValue().saving) return false;
+            if (model.state().getValue().saving || model.publicationPending() || Boolean.TRUE.equals(model.preparingPhoto.getValue())) return false;
             tab = item.getItemId();
             getChildFragmentManager().popBackStackImmediate(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE);
             Fragment root = tab == R.id.nav_account ? new AccountFragment() : CatalogListFragment.create(tab == R.id.nav_points);
@@ -41,13 +42,13 @@ public class HomeFragment extends Fragment {
             getChildFragmentManager().beginTransaction().replace(R.id.catalog_container, root).commit();
         }
         model.state().observe(getViewLifecycleOwner(), state -> {
-            for (int i = 0; i < navigation.getMenu().size(); i++) navigation.getMenu().getItem(i).setEnabled(!state.saving);
+            for (int i = 0; i < navigation.getMenu().size(); i++) navigation.getMenu().getItem(i).setEnabled(!state.saving && !model.publicationPending());
         });
         model.start();
     }
     public CatalogViewModel catalogModel() { return model; }
     public boolean handleBack() {
-        if (model != null && model.state().getValue().saving) return true;
+        if (model != null && (model.state().getValue().saving || model.publicationPending() || Boolean.TRUE.equals(model.preparingPhoto.getValue()))) return true;
         if (getChildFragmentManager().getBackStackEntryCount() > 0) { getChildFragmentManager().popBackStack(); return true; }
         return false;
     }

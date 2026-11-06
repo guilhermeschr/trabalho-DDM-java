@@ -20,6 +20,12 @@ public final class CatalogViewModel extends ViewModel {
     private final MutableLiveData<State> state = new MutableLiveData<>(new State(Collections.emptyList(), Collections.emptyList(), false, false, false, "", ""));
     private boolean started;
     private String pendingId;
+    private ObjectDraft pendingDraft;
+    public final java.util.List<ObjectPhoto> photos = new java.util.ArrayList<>();
+    public final MutableLiveData<Boolean> preparingPhoto = new MutableLiveData<>(false);
+    public final MutableLiveData<String> photoError = new MutableLiveData<>("");
+    public String cameraPath;
+    public void loadPhotos(String id, CatalogRepository.Callback<java.util.List<String>> callback) { repository.loadPhotos(id, callback); }
     public String query = "", pointFilter = "", draftPoint = "";
     public Double latitude, longitude;
     public CatalogViewModel(CatalogRepository repository, UserProfile profile) { this.repository = repository; this.profile = profile; }
@@ -60,11 +66,13 @@ public final class CatalogViewModel extends ViewModel {
     }
     public void beginDraft() {
         if (state.getValue().saving) return;
-        latitude = null; longitude = null; draftPoint = ""; pendingId = null;
+        latitude = null; longitude = null; draftPoint = ""; pendingId = null; pendingDraft = null; photos.clear();
         State old = state.getValue();
         state.setValue(new State(old.points, old.objects, old.loading, false, false, old.error, ""));
     }
+    public boolean publicationPending() { return pendingDraft != null; }
     public void consumeSaved() {
+        photos.clear(); pendingDraft = null;
         State old = state.getValue();
         state.setValue(new State(old.points, old.objects, old.loading, old.saving, false, old.error, old.saveError));
     }
@@ -76,12 +84,14 @@ public final class CatalogViewModel extends ViewModel {
         if (error != null) { state.setValue(new State(old.points, old.objects, old.loading, false, false, old.error, error)); return; }
         if (pendingId == null) pendingId = repository.newObjectId();
         state.setValue(new State(old.points, old.objects, false, true, false, old.error, ""));
-        repository.save(pendingId, draft, new CatalogRepository.Callback<String>() {
+        if (pendingDraft == null) pendingDraft = draft;
+        repository.save(pendingId, pendingDraft, new CatalogRepository.Callback<String>() {
             public void success(String id) {
                 State current = state.getValue();
                 state.setValue(new State(current.points, current.objects, false, false, true, current.error, ""));
             }
             public void error(String message) {
+                if (!message.startsWith("Confirmação pendente")) pendingDraft = null;
                 State current = state.getValue();
                 state.setValue(new State(current.points, current.objects, false, false, false, current.error, message));
             }

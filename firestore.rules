@@ -34,12 +34,31 @@ service cloud.firestore {
         return signedIn() && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil == 'COMUM';
       }
       function validText(value) { return value is string && value.size() > 0 && value.matches('(?s).*\\S.*'); }
+      function photoPresent(slot) { return getAfter(/databases/$(database)/documents/objetos/$(id)/fotos/$(slot)).data.tipo == 'image/jpeg'; }
+      function validPhotos() {
+        let f = request.resource.data.fotos;
+        return f in [[], ['0'], ['0','1'], ['0','1','2'], ['0','1','2','3'], ['0','1','2','3','4']]
+          && (f.size()<1 || photoPresent('0')) && (f.size()<2 || photoPresent('1'))
+          && (f.size()<3 || photoPresent('2')) && (f.size()<4 || photoPresent('3')) && (f.size()<5 || photoPresent('4'));
+      }
+      match /fotos/{slot} {
+        allow read: if request.auth != null && get(/databases/$(database)/documents/objetos/$(id)).data.situacao == 'DISPONIVEL';
+        allow create: if request.auth != null
+          && !exists(/databases/$(database)/documents/objetos/$(id))
+          && getAfter(/databases/$(database)/documents/objetos/$(id)).data.autorUid == request.auth.uid
+          && slot in getAfter(/databases/$(database)/documents/objetos/$(id)).data.fotos
+          && request.resource.data.keys().hasOnly(['base64','tipo'])
+          && request.resource.data.tipo == 'image/jpeg'
+          && request.resource.data.base64 is string && request.resource.data.base64.size()>0
+          && request.resource.data.base64.size()<=136536;
+        allow update, delete: if false;
+      }
       allow list: if signedIn() && resource.data.situacao == 'DISPONIVEL';
       // A leitura de ID ausente permite a transação de criação sem escrita offline.
       allow get: if signedIn() && (!exists(/databases/$(database)/documents/objetos/$(id)) || resource.data.situacao == 'DISPONIVEL');
       allow create: if commonUser()
         && request.resource.data.keys().hasAll(['nome', 'descricao', 'localAproximado', 'latitude', 'longitude', 'pontoId', 'autorUid', 'situacao', 'fotos', 'criadoEm'])
-        && request.resource.data.keys().hasOnly(['nome', 'descricao', 'localAproximado', 'latitude', 'longitude', 'pontoId', 'autorUid', 'situacao', 'fotos', 'criadoEm'])
+        && request.resource.data.keys().hasOnly(['nome', 'descricao', 'localAproximado', 'latitude', 'longitude', 'pontoId', 'autorUid', 'situacao', 'fotos', 'criadoEm', 'miniaturaBase64'])
         && validText(request.resource.data.nome)
         && validText(request.resource.data.descricao)
         && validText(request.resource.data.localAproximado)
@@ -49,7 +68,10 @@ service cloud.firestore {
         && request.resource.data.latitude is number && request.resource.data.latitude >= -90 && request.resource.data.latitude <= 90
         && request.resource.data.longitude is number && request.resource.data.longitude >= -180 && request.resource.data.longitude <= 180
         && request.resource.data.situacao == 'DISPONIVEL'
-        && request.resource.data.fotos is list && request.resource.data.fotos.size() == 0
+        && request.resource.data.fotos is list && validPhotos()
+        && ((!('miniaturaBase64' in request.resource.data) && request.resource.data.fotos.size()==0)
+          || (request.resource.data.miniaturaBase64 is string && request.resource.data.miniaturaBase64.size()<=16384
+            && (request.resource.data.fotos.size()==0 || request.resource.data.miniaturaBase64.size()>0)))
         && request.resource.data.criadoEm == request.time;
       allow update, delete: if false;
     }

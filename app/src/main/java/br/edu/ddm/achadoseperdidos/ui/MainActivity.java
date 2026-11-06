@@ -14,10 +14,17 @@ import br.edu.ddm.achadoseperdidos.auth.*;
 public class MainActivity extends AppCompatActivity {
     private AuthViewModel model;
     @Override public void onCreate(Bundle saved) {
-        super.onCreate(saved); setContentView(R.layout.activity_main);
+        super.onCreate(saved);
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        setContentView(R.layout.activity_main);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.container), (view, insets) -> {
             androidx.core.graphics.Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime());
-            view.setPadding(bars.left, bars.top, bars.right, bars.bottom); return insets;
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            android.view.View navigation = view.findViewById(R.id.bottom_navigation);
+            if (navigation != null) navigation.setVisibility(insets.isVisible(WindowInsetsCompat.Type.ime())
+                    ? android.view.View.GONE : android.view.View.VISIBLE);
+            // O contêiner já reservou barras e teclado. Material não deve aplicar o mesmo espaço novamente.
+            return WindowInsetsCompat.CONSUMED;
         });
         model = new ViewModelProvider(this, new ViewModelProvider.Factory() {
             @NonNull @Override public <T extends ViewModel> T create(@NonNull Class<T> type) {

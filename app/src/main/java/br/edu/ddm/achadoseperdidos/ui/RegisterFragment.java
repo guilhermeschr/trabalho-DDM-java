@@ -14,7 +14,7 @@ public class RegisterFragment extends Fragment {
         AuthViewModel model = new ViewModelProvider(requireActivity()).get(AuthViewModel.class);
         RadioGroup role = view.findViewById(R.id.role);
         role.setOnCheckedChangeListener((group, id) -> view.findViewById(R.id.point_fields).setVisibility(id == R.id.collection ? View.VISIBLE : View.GONE));
-        view.findViewById(R.id.location).setOnClickListener(v -> new MapPickerDialog().show(getChildFragmentManager(), "location"));
+        view.findViewById(R.id.location).setOnClickListener(v -> MapPickerDialog.create(model.latitude, model.longitude, false).show(getChildFragmentManager(), "location"));
         getChildFragmentManager().setFragmentResultListener("location", getViewLifecycleOwner(), (key,result) -> {
             model.latitude = result.getDouble("lat"); model.longitude = result.getDouble("lng");
             coordinates(view, model);

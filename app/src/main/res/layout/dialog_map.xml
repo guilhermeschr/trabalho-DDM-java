@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical">
+    <com.google.android.material.button.MaterialButton android:id="@+id/map_current_location"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_marginStart="16dp" android:text="@string/map_current_location" />
+    <TextView android:id="@+id/map_location_status" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:paddingHorizontal="16dp"
+        android:accessibilityLiveRegion="polite" android:visibility="gone" />
+    <TextView android:id="@+id/map_status" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:padding="16dp"
+        android:accessibilityLiveRegion="polite" android:text="@string/map_loading" />
+    <com.google.android.material.button.MaterialButton android:id="@+id/map_retry"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_marginStart="16dp" android:text="@string/map_retry"
+        android:visibility="gone" />
+    <WebView android:id="@+id/map_web" android:layout_width="match_parent"
+        android:layout_height="360dp" />
+</LinearLayout>
