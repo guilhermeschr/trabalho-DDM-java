@@ -6,7 +6,7 @@ Documento principal de requisitos do repositório. Consulte este arquivo para de
 
 **Data:** 06/11/2026
 
-**Versão:** 1.10 — Formulários com teclado sem sobreposição do menu
+**Versão:** 1.12 — Navegação do ponto limitada ao inventário e conta
 
 ## 1. Objetivo
 
@@ -23,9 +23,9 @@ Cada conta possui um único perfil, escolhido no cadastro e mantido na primeira 
 | Ação | Usuário comum | Ponto de coleta |
 | --- | --- | --- |
 | Criar conta, entrar e sair | Sim | Sim |
-| Consultar objetos disponíveis, buscar e filtrar | Sim | Sim |
+| Consultar catálogo geral de objetos, buscar e filtrar | Sim | Não; usa o próprio inventário |
 | Ver detalhes e localização de um objeto disponível | Sim | Sim |
-| Consultar a lista e os detalhes dos pontos de coleta | Sim | Sim |
+| Consultar a lista e os detalhes dos pontos de coleta | Sim | Não há acesso pela navegação do ponto |
 | Cadastrar um objeto encontrado | Sim | Não |
 | Usar localização atual como sugestão em um cadastro permitido | Sim | Sim, no cadastro do próprio ponto |
 | Aparecer na lista de pontos de coleta | Não | Sim |
@@ -42,19 +42,19 @@ O acesso às funcionalidades exige login. Quando este documento mencionar inform
 | RF01 | Cadastrar usuário comum com nome, e-mail e senha. | Com dados válidos e e-mail não utilizado, a conta é criada com perfil de usuário comum e permite acessar o app. |
 | RF02 | Cadastrar ponto de coleta com nome do estabelecimento, e-mail, senha, endereço e localização no mapa. | Após concluir o cadastro, o estabelecimento aparece na lista de pontos e a conta acessa as funções do seu perfil. |
 | RF03 | Permitir login por e-mail e senha e saída da conta para os dois perfis. | Credenciais válidas abrem o app; credenciais inválidas exibem uma mensagem; após sair, telas protegidas exigem novo login. |
-| RF04 | Cadastrar um objeto encontrado. | Um usuário comum consegue salvar nome, descrição, localização aproximada em texto e coordenadas, ponto de retirada e fotos opcionais, capturadas pela câmera ou selecionadas na galeria. O objeto fica disponível após o cadastro ser confirmado. |
+| RF04 | Cadastrar um objeto encontrado. | Um usuário comum consegue salvar nome, descrição, localização aproximada em texto e coordenadas, ponto de retirada e fotos opcionais, capturadas pela câmera ou selecionadas na galeria. O objeto fica disponível após o cadastro ser confirmado. O catálogo geral com pesquisa e filtro é apresentado ao usuário comum; o ponto consulta seu próprio inventário. |
 | RF05 | Listar os objetos disponíveis. | A lista mostra nome, local aproximado em texto, nome do ponto de retirada e uma foto quando existir; objetos entregues não aparecem. |
 | RF06 | Pesquisar objetos pelo nome. | A busca retorna os objetos disponíveis cujo nome contém o texto informado, sem diferenciar maiúsculas e minúsculas. Texto vazio mantém a lista sem restrição por nome. |
 | RF07 | Filtrar objetos por ponto de coleta. | Ao selecionar um ponto, somente seus objetos disponíveis aparecem. Busca e filtro podem ser combinados, e remover o filtro volta a considerar todos os pontos. |
 | RF08 | Exibir os detalhes de um objeto disponível. | A tela apresenta nome, descrição, fotos quando houver, local aproximado em texto e no mapa e ponto de retirada vinculado. |
-| RF09 | Consultar pontos de coleta. | Os dois perfis conseguem abrir a lista de estabelecimentos e consultar nome, endereço e localização no mapa de cada ponto. |
+| RF09 | Consultar pontos de coleta. | O usuário comum consegue abrir a lista de estabelecimentos e consultar nome, endereço e localização no mapa de cada ponto. A navegação do ponto de coleta fica restrita ao próprio inventário e à conta. |
 | RF10 | Consultar os objetos do próprio ponto. | O ponto visualiza apenas seu inventário, separado entre disponíveis e entregues. |
-| RF11 | Registrar uma entrega com descrição e pelo menos uma foto. | O ponto vinculado consegue concluir a retirada de um objeto disponível; descrição, fotos, data/hora e responsável pelo registro ficam associados à entrega. |
+| RF11 | Registrar uma entrega com descrição e pelo menos uma foto. | O ponto vinculado consegue concluir a retirada de um objeto disponível; descrição, fotos, data/hora e responsável pelo registro ficam associados à entrega. São obrigatórias descrição e de uma a cinco fotos da galeria, de até 102.400 bytes JPEG cada. |
 | RF12 | Atualizar a situação após a entrega. | Após a gravação confirmada, o objeto fica entregue, sai das buscas de disponíveis e permanece no histórico do ponto. |
 | RF13 | Consultar o histórico e os comprovantes das próprias entregas. | O ponto abre um objeto entregue e consulta os dados do objeto, a descrição, as fotos e a data/hora da retirada. Outros usuários e pontos não acessam os comprovantes. |
 | RF14 | Selecionar localizações manualmente no mapa. | No cadastro de objeto e de ponto, o usuário consegue marcar e ajustar uma posição sem conceder acesso à localização atual do celular. |
 | RF15 | Fotografar um objeto encontrado usando a câmera do celular. | No cadastro do objeto, o usuário pode abrir a câmera, confirmar a foto e anexá-la ao anúncio; cancelar a captura mantém o formulário e não cria anexo. |
-| RF16 | Manter cache local com Room. | Perfis confirmados são armazenados localmente nesta etapa; os módulos de consulta deverão armazenar objetos disponíveis e pontos já carregados. O cache nunca autentica usuários, armazena senhas ou autoriza entregas. |
+| RF16 | Armazenar localmente apenas o perfil confirmado com Room. | O perfil confirmado é gravado localmente e apagado ao sair. O cache não armazena senhas, não autentica offline nem autoriza entregas. Objetos, pontos e comprovantes são consultados no Firebase, sem cache Room desses dados. |
 | RF17 | Sugerir a localização atual ao selecionar um local no mapa. | Sem posição anterior, o app pede permissão de localização em contexto e tenta pré-selecionar a posição do aparelho. O usuário pode ajustar o marcador e precisa confirmar. Uma posição já escolhida é preservada; o botão “Usar minha localização” permite solicitar outra sugestão. Permissão negada, GPS desligado ou ausência de posição não impedem a seleção manual. |
 
 ## 4. Regras de negócio
@@ -68,7 +68,7 @@ O acesso às funcionalidades exige login. Quando este documento mencionar inform
 | RN05 | A entrega exige descrição não vazia e pelo menos uma foto que ajude a identificar quem retirou o objeto. Exemplo de descrição: nome informado pelo recebedor e como o item foi reconhecido. O recebedor não precisa ter conta no app. |
 | RN06 | As fotos do objeto são opcionais e visíveis junto ao anúncio. As fotos e a descrição da entrega são privadas para o ponto responsável. Os dois tipos de foto não devem ser misturados. |
 | RN07 | Um objeto pode ter apenas uma entrega concluída. Dois toques no botão ou duas sessões da mesma conta não podem gerar entregas duplicadas. |
-| RN08 | O objeto só pode ser marcado como entregue depois do envio das fotos e da gravação conjunta do registro de entrega e da nova situação. Uma falha no envio dos comprovantes não pode concluir a retirada. |
+| RN08 | O objeto só pode ser marcado como entregue com a gravação conjunta, em uma única transação, das fotos Base64, do registro de entrega e da nova situação. Uma falha em qualquer parte não conclui a retirada. |
 | RN09 | O local aproximado do encontro é registrado em texto e por um marcador no mapa. O ponto de retirada usa seu próprio endereço e suas próprias coordenadas. |
 | RN10 | O ponto aparece na lista assim que seu cadastro estiver completo. Não há aprovação administrativa. |
 | RN11 | Nome, descrição e textos de localização obrigatórios não podem conter apenas espaços. E-mail deve ser válido, e a senha deve cumprir a política configurada no Firebase Authentication. |
@@ -92,7 +92,7 @@ O acesso às funcionalidades exige login. Quando este documento mencionar inform
 
 A seleção de localização pode ser uma tela reutilizada ou um componente dos formulários. Cada mapa de detalhes deve permitir visualizar e explorar a posição marcada. A primeira versão não exige mapa geral com todos os anúncios, cálculo de distância ou rotas. Nos formulários, uma posição ainda não preenchida pode ser sugerida a partir da localização atual autorizada; existe também o botão “Usar minha localização”. A confirmação manual do marcador continua obrigatória.
 
-A navegação implementada usa Bottom Navigation com Objetos, Pontos e Conta (perfil e saída). Detalhes e cadastro abrem em Fragments internos com retorno à lista. O acesso “Meus objetos” será adicionado com o inventário do ponto.
+A navegação implementada usa Bottom Navigation por perfil: usuário comum com Objetos, Pontos e Conta; ponto de coleta com Meus objetos e Conta (perfil e saída). Detalhes e cadastro abrem em Fragments internos com retorno à lista. O perfil PONTO_COLETA tem somente “Meus objetos” e “Conta”, abrindo inicialmente em “Meus objetos”, com filtros Disponíveis/Entregues do próprio ponto. O usuário comum mantém “Objetos”, “Pontos” e “Conta”. O menu inferior permanece oculto com o teclado aberto. Os detalhes do próprio objeto disponível permitem registrar entrega; os entregues exibem comprovantes privados.
 
 ## 6. Fluxos principais
 
@@ -110,34 +110,33 @@ A navegação implementada usa Bottom Navigation com Objetos, Pontos e Conta (pe
 1. A pessoa vai ao ponto indicado e se identifica presencialmente. Não existe solicitação de retirada ou reserva pelo app.
 2. O ponto abre o objeto na sua lista de disponíveis e seleciona “Entregar”.
 3. Registra uma descrição e seleciona pela galeria pelo menos uma foto relacionada à identificação de quem recebeu o item.
-4. O app envia as fotos e confirma a gravação da entrega e da mudança de situação.
+4. O app confirma em uma única transação a gravação das fotos, da entrega e da mudança de situação.
 5. O objeto sai da lista geral e aparece entre os entregues do ponto, com os comprovantes privados.
 
 ## 7. Dados principais
 
-O Firebase Authentication gerencia credenciais. A senha não é armazenada nas coleções do aplicativo. Os registros do Firestore guardam os dados do domínio e referências aos arquivos do Cloud Storage.
+O Firebase Authentication gerencia credenciais. A senha não é armazenada nas coleções do aplicativo. Os registros do Firestore guardam os dados do domínio e referências a documentos de fotos Base64, em caminhos separados para anúncios e comprovantes privados.
 
 | Entidade / coleção | Campos principais | Relações |
 | --- | --- | --- |
 | Usuário — `usuarios/{uid}` | UID, nome de exibição, perfil (`COMUM` ou `PONTO_COLETA`) e data de criação. | UID corresponde à conta do Authentication. Para ponto, o nome de exibição é o nome do estabelecimento. |
 | Ponto de coleta — `pontosColeta/{uid}` | UID do responsável, nome do estabelecimento, endereço, latitude, longitude e data de criação. | Um ponto por conta de perfil `PONTO_COLETA`; o ID é o UID da conta. |
 | Objeto encontrado — `objetos/{id}` | ID, nome, descrição, local aproximado em texto, latitude, longitude, UID do autor, ID do ponto, situação, referências das fotos opcionais e data de cadastro. | Um autor, um ponto de retirada e, após a retirada, uma entrega. |
-| Entrega — `entregas/{objetoId}` | ID do objeto, ID do ponto, UID de quem registrou, descrição, referências das fotos e data/hora da entrega. | O ID igual ao do objeto permite manter um único registro de entrega por objeto. |
+| Entrega — `entregas/{objetoId}` | ID do objeto, ID do ponto, UID de quem registrou, descrição, referências das fotos, identificador da tentativa e data/hora da entrega. | O ID igual ao do objeto permite manter um único registro de entrega por objeto. |
 
 O e-mail é usado pelo Authentication e não precisa ser exposto nos registros públicos do ponto. A conta acessa os próprios dados de perfil; consultas a estabelecimentos usam a coleção de pontos.
 
-As fotos dos anúncios ficam em Base64 no Firestore: até cinco JPEGs opcionais de 102.400 bytes cada em `objetos/{id}/fotos/{slot}` (slots ordenados de `0` a `4`, campos `base64` e `tipo`). O anúncio guarda as referências `fotos` e `miniaturaBase64` da primeira foto, de até 12.288 bytes. Esses campos Base64 não são indexados. Anúncio e fotos são criados em uma transação online, sem anexos posteriores. A lista carrega apenas a capa; os detalhes consultam as imagens completas. Objetos antigos sem capa continuam compatíveis. Comprovantes de entrega continuam previstos separadamente no Cloud Storage, ainda pendentes de implementação e configuração. Comprovantes são carregados com acesso autenticado e restrito ao ponto, sem URLs públicas ou links compartilháveis de download gravados nos documentos do anúncio.
+As fotos dos anúncios ficam em Base64 no Firestore: até cinco JPEGs opcionais de 102.400 bytes cada em `objetos/{id}/fotos/{slot}` (slots ordenados de `0` a `4`, campos `base64` e `tipo`). O anúncio guarda as referências `fotos` e `miniaturaBase64` da primeira foto, de até 12.288 bytes. Esses campos Base64 não são indexados. Anúncio e fotos são criados em uma transação online, sem anexos posteriores. A lista carrega apenas a capa; os detalhes consultam as imagens completas. Objetos antigos sem capa continuam compatíveis. Comprovantes ficam em `entregas/{objetoId}/fotos/{slot}` com `base64` e `tipo`, separados das fotos do objeto. São de uma a cinco imagens JPEG, limitadas a 102.400 bytes cada, sem indexação. O documento de entrega contém `objetoId`, `pontoId`, `responsavelUid`, `descricao`, `fotos`, `operacaoId` e `criadoEm` do servidor. Nenhum comprovante é colocado no anúncio público; somente o ponto responsável o consulta. O Storage não é usado e nenhum faturamento é necessário para essa integração, sujeita às cotas do Firestore Spark.
 
 ## 8. Organização técnica
 
 | Tecnologia | Uso no projeto | Referência oficial |
 | --- | --- | --- |
 | Android com Java, layouts XML e MVVM | Uma Activity hospeda Fragments. ViewModels expõem estado via LiveData e delegam operações aos repositórios. Componentes Material padrão compõem a interface. | [Arquitetura Android](https://developer.android.com/topic/architecture) |
-| Room | Cache local de perfis confirmados e, nas próximas etapas, objetos e pontos consultados. Firebase continua sendo a fonte de verdade; sem fila de alterações offline. | [Room](https://developer.android.com/training/data-storage/room) |
+| Room | Armazenamento local somente de perfis confirmados; apagado ao sair, sem autenticação offline. Firebase continua sendo a fonte de verdade; sem fila de alterações offline. | [Room](https://developer.android.com/training/data-storage/room) |
 | Câmera | Captura de foto do objeto encontrado, com arquivo privado e compartilhamento por FileProvider quando necessário. | [Captura de fotos](https://developer.android.com/media/camera/camera-deprecated/photobasics) |
 | Firebase Authentication | Cadastro e login com e-mail e senha. | [Autenticação por senha no Android](https://firebase.google.com/docs/auth/android/password-auth) |
-| Cloud Firestore | Usuários, pontos, objetos e entregas; transação para registrar a entrega e alterar a situação juntas. | [Transações e gravações em lote](https://firebase.google.com/docs/firestore/manage-data/transactions) |
-| Cloud Storage for Firebase | Somente comprovantes de entrega futuros; fotos dos anúncios usam Firestore/Spark. | [Upload de arquivos no Android](https://firebase.google.com/docs/storage/android/upload-files) |
+| Cloud Firestore | Usuários, pontos, objetos, fotos Base64 e entregas; transação única para entrega, comprovantes e situação. | [Transações e gravações em lote](https://firebase.google.com/docs/firestore/manage-data/transactions) |
 | Localização atual — Google Play services Location 21.3.0 | Consulta pontual e cancelável em primeiro plano, com permissão aproximada ou precisa. Não exige API key ou faturamento adicional. | [Localização no Android](https://developer.android.com/develop/sensors-and-location/location) |
 | Google Maps JavaScript API em WebView | Seleção e visualização de posições com marcadores, usando Maps Demo Key para o protótipo sem faturamento. AndroidX WebKit carrega a página local e limita a comunicação à origem do app. | [Maps Demo Key](https://developers.google.com/maps/documentation/javascript/demo-key), [suporte a WebView](https://developers.google.com/maps/documentation/javascript/browsersupport) |
 
@@ -145,11 +144,11 @@ O aplicativo acessa o Firebase pelos SDKs e o Google Maps pela API JavaScript em
 
 O login somente libera a área autenticada após confirmar o perfil no servidor. Se a conta existir no Authentication e o documento de perfil ainda não existir no Firestore, o usuário é direcionado para concluir o cadastro sem criar outra conta. Usuário e ponto são gravados juntos por lote no Firestore. O cadastro valida confirmação de senha e um mínimo inicial de seis caracteres; a política do Firebase pode exigir mais. Ao sair, a sessão é encerrada e o cache do perfil é apagado.
 
-Na primeira etapa, Room mantém o perfil confirmado, com acesso ao banco fora da thread principal. O cache de objetos e pontos será adicionado com as respectivas telas; conteúdo local deverá ser identificado como potencialmente desatualizado e nunca permitirá entregas offline. Os dados de autorização continuam dependendo de confirmação no servidor.
+Na primeira etapa, Room mantém o perfil confirmado, com acesso ao banco fora da thread principal. Objetos, pontos e comprovantes não serão armazenados no Room. Suas consultas e todas as gravações exigem servidor; não existe fila offline de entregas. Os dados de autorização continuam dependendo de confirmação no servidor.
 
 O identificador Android (`applicationId`) é `trabalho.DDM.java`, registrado no projeto Firebase atual `trabalho-ddm-java-3cc2a`, da conta D2G Trabalhos. O arquivo `app/google-services.json` é instalado localmente e permanece fora do versionamento; `.firebaserc` identifica o projeto padrão para a CLI. O namespace das classes Java permanece `br.edu.ddm.achadoseperdidos`, com Android mínimo 7.0 (API 24), compilação/alvo API 35 e Java 17. As telas usam o tema padrão Material 3 e Fragments, sem personalização visual complexa.
 
-A configuração atual usa o plano Spark, Authentication por e-mail/senha e Firestore Standard, banco `(default)`, em `southamerica-east1` (São Paulo), com as regras de `firestore.rules` publicadas. O novo projeto não contém as contas e os dados do projeto anterior; não houve migração. O Google Maps usa a Maps Demo Key do projeto separado `gmp-demo-project-991730262`, da mesma conta D2G, sem vincular faturamento. Storage continua pendente de configuração.
+A configuração atual usa o plano Spark, Authentication por e-mail/senha e Firestore Standard, banco `(default)`, em `southamerica-east1` (São Paulo), com as regras de `firestore.rules` publicadas. O novo projeto não contém as contas e os dados do projeto anterior; não houve migração. O Google Maps usa a Maps Demo Key do projeto separado `gmp-demo-project-991730262`, da mesma conta D2G, sem vincular faturamento. Storage não faz parte da configuração adotada; anúncios e comprovantes usam documentos Base64 no Firestore.
 
 Por autorização do responsável, a integração nativa foi substituída por Google Maps JavaScript API em WebView para usar a Maps Demo Key gratuita, sem cartão ou faturamento. `MAPS_API_KEY` continua em `local.properties`, ignorado pelo Git, e é incluída no APK como configuração do mapa. A chave Demo é destinada a protótipos e tem limites diários do provedor; não atende à publicação em produção. O SDK nativo e suas restrições por pacote/SHA-1 deixam de ser usados pelo mapa.
 
@@ -161,11 +160,11 @@ O mapa exibe carregamento, informa falhas de rede, autorização ou tempo limite
 
 Para o volume pequeno da demonstração, a busca por nome pode ser feita no app sobre os objetos disponíveis carregados. O filtro por ponto deve produzir o mesmo resultado quando combinado com essa busca. Não é necessário contratar um serviço de busca.
 
-No registro da entrega, primeiro são enviados os comprovantes ao Storage. Depois, uma transação no Firestore verifica se o objeto ainda está disponível e pertence ao ponto autenticado, cria a entrega e atualiza sua situação. Essa transação cobre os registros do Firestore; não inclui o upload dos arquivos. Arquivos enviados sem uma entrega concluída não constituem um comprovante de retirada salva.
+No registro da entrega, uma transação online verifica que o objeto pertence ao ponto autenticado e está DISPONIVEL, cria a entrega e seus comprovantes Base64 e atualiza somente a situação para ENTREGUE. O ID da entrega é o ID do objeto. A mesma operacaoId confirma um reenvio; outra tentativa sobre entrega já concluída informa o conflito e preserva o comprovante existente. Uma resposta incerta mantém o snapshot bloqueado e permite nova tentativa; uma ausência só é confirmada após terminar a operação e consultar o servidor. Não há recuperação de rascunho após encerramento do processo.
 
-As permissões devem ser aplicadas nas regras do Firestore e do Storage, além da interface: restringir comprovantes ao ponto responsável, impedir troca de perfil e de ponto por alteração direta dos dados e permitir a mudança de situação apenas no fluxo autorizado de entrega. Esconder botões não substitui essas regras.
+As permissões devem ser aplicadas nas regras do Firestore, além da interface: restringir comprovantes ao ponto responsável, impedir troca de perfil e de ponto por alteração direta dos dados e permitir a mudança de situação apenas no fluxo autorizado de entrega. Esconder botões não substitui essas regras.
 
-Antes da demonstração, o projeto precisa ter Firebase configurado, login por e-mail/senha habilitado, Firestore e Storage com regras de acesso aplicadas e a chave Demo do Google Maps configurada para a página web exibida dentro do app Android.
+Antes da demonstração, o projeto precisa ter Firebase configurado, login por e-mail/senha habilitado, Firestore com regras e índices de inventário/fotos aplicados e a chave Demo do Google Maps configurada para a página web exibida dentro do app Android.
 
 ## 9. Validações e tratamento de falhas
 
@@ -180,9 +179,9 @@ Antes da demonstração, o projeto precisa ter Firebase configurado, login por e
 | Sem conexão ou falha ao carregar dados | Exibir erro e opção de tentar novamente; não confundir falha com lista vazia. |
 | Permissão de localização negada, localização do aparelho desligada ou consulta sem resultado | Informar a situação e manter a escolha manual do marcador. Preservar coordenadas anteriores; permitir outra tentativa pelo botão “Usar minha localização”. |
 | Falha no mapa, falta de suporte do WebView ou limite da Demo Key | Informar a falha; quando aplicável, oferecer nova tentativa ou orientar a atualização do Android System WebView. Manter textos de localização e endereço visíveis. Preservar o formulário e a seleção anterior; só permitir nova confirmação com mapa pronto e coordenadas válidas. |
-| Falha no upload de fotos do objeto | Preservar o formulário e não anunciar sucesso. Permitir tentar novamente ou remover as fotos opcionais antes de salvar. |
+| Falha na gravação de fotos do objeto | Preservar o formulário e não anunciar sucesso. Permitir tentar novamente ou remover as fotos opcionais antes de salvar. |
 | Retirada sem descrição ou sem fotos | Impedir a confirmação e informar os campos obrigatórios. |
-| Falha no envio dos comprovantes | Não marcar o objeto como entregue. Preservar o formulário enquanto a tela estiver aberta e permitir nova tentativa. |
+| Falha na gravação dos comprovantes | Não marcar o objeto como entregue. Preservar o formulário enquanto a tela estiver aberta e permitir nova tentativa. |
 | Resposta incerta ao salvar uma entrega | Consultar o estado gravado antes de repetir a operação, evitando duplicação ou indicação incorreta de falha. |
 | Tentativa de entrega por outro ponto | Negar a operação, inclusive se a tentativa for feita diretamente contra o Firebase. |
 | Objeto já entregue ou dois envios simultâneos | Manter uma única entrega, atualizar a tela e informar que o objeto já foi entregue. |
@@ -212,29 +211,29 @@ Usar na demonstração pelo menos um usuário comum, dois pontos de coleta e obj
 | CA04 — Detalhes e mapas | Abrir objeto e ponto com coordenadas diferentes; selecionar locais manualmente sem permissão de localização atual. | Cada tela mostra o marcador e o texto correspondentes; a falta da permissão não bloqueia o fluxo. | RF08–RF09, RF14, RNF06 |
 | CA05 — Inventário separado | Entrar em cada ponto e abrir seus objetos. | Cada ponto consulta somente seu inventário, com disponíveis e entregues separados. | RF10 |
 | CA06 — Entrega completa | Entregar um objeto com descrição e foto; reabrir o app. | Existe uma entrega; o objeto saiu da busca e permanece entregue no histórico, com os comprovantes. | RF11–RF13, RNF03 |
-| CA07 — Entrega incompleta ou com falha | Omitir descrição, omitir foto e simular falha de upload em tentativas distintas. | Nenhuma tentativa conclui a entrega; o app explica o problema e permite corrigir ou tentar novamente. | RF11–RF12, RNF05 |
-| CA08 — Acesso indevido | Tentar entregar e ler comprovantes usando usuário comum ou outro ponto, incluindo acesso direto aos serviços. | Firestore e Storage negam as operações não autorizadas. | RF13, RNF04 |
+| CA07 — Entrega incompleta ou com falha | Omitir descrição, omitir foto e simular falha de gravação em tentativas distintas. | Nenhuma tentativa conclui a entrega; o app explica o problema e permite corrigir ou tentar novamente. | RF11–RF12, RNF05 |
+| CA08 — Acesso indevido | Tentar entregar e ler comprovantes usando usuário comum ou outro ponto, incluindo acesso direto aos serviços. | Firestore nega as operações não autorizadas. | RF13, RNF04 |
 | CA09 — Repetição e concorrência | Tocar duas vezes em entregar ou enviar por duas sessões do mesmo ponto. | Somente uma entrega é persistida; a situação final é entregue. | RF11–RF12 |
 | CA10 — Erros e ausência de dados | Testar cadastro inválido, lista sem pontos, busca vazia, falha de carregamento e falha do mapa. | Validações e mensagens seguem a seção 9; dados já preenchidos são preservados durante a tentativa. | RF01–RF09, RNF05 |
 | CA11 — Câmera | Abrir a câmera no cadastro de objeto, confirmar uma foto e depois cancelar outra captura. | A foto confirmada é anexada; cancelar não adiciona arquivo nem apaga o formulário. | RF15 |
-| CA12 — Cache local | Carregar dados, consultar o cache Room, encerrar sessão e tentar autenticar sem rede. | Dados confirmados são persistidos; o perfil em cache é apagado na saída e não libera login offline. | RF16 |
+| CA12 — Perfil local | Entrar com perfil confirmado, consultar a tabela profiles do Room, encerrar sessão e tentar autenticar sem rede. | Apenas o perfil confirmado é persistido localmente, apagado na saída e não libera login offline. Não há tabelas Room de objetos, pontos ou comprovantes. | RF16 |
 | CA13 — Localização atual opcional | Abrir mapa sem posição e autorizar localização; abrir com posição anterior; usar o botão de localização; negar permissão/desligar GPS; escolher manualmente enquanto a busca está em andamento; consultar detalhes. | Sugestão inicial ajustável e confirmada pelo usuário; posição anterior preservada; seleção manual disponível em falhas e sem ser substituída por resposta atrasada; detalhes não consultam a posição do aparelho. | RF14, RF17, RN13, RNF06 |
 
 ## 12. Lista de verificação para o desenvolvimento
 
 - [x] Firebase atual configurado na conta D2G, arquivo Android instalado e app aberto no emulador em 05/11/2026; cadastro/login completos no novo projeto ainda pendentes de validação.
-- [ ] RF01–RF03: cadastro dos dois perfis, login e saída.
+- [x] RF01–RF03: código de cadastro dos dois perfis, login e saída; aceite manual completo continua separado.
 - [x] RF02 e RF09: código de cadastro, listagem e detalhes dos pontos; mapa web carregado no emulador e consulta sem edição validada. Cadastro completo de ponto no novo Firebase ainda pendente de validação.
 - [x] RF04: cadastro com ponto obrigatório e até cinco fotos opcionais implementado; validação manual completa com Firebase real pendente.
-- [x] RF05–RF07: lista de disponíveis, busca e filtro combinados (anúncios sem fotos nesta etapa).
-- [x] RF08 e RF14: código de detalhes e mapas para objetos e pontos, sem fotos; mapa web, seleção, confirmação de coordenadas e preservação ao recriar a tela validados no emulador. Fluxo completo com objetos reais ainda pendente de validação.
-- [ ] RF10: inventário do próprio ponto separado por situação.
-- [ ] RF11–RF12: entrega com descrição, foto obrigatória e atualização consistente.
-- [ ] RF13: histórico com comprovantes privados.
+- [x] RF05–RF07: lista de disponíveis, busca e filtro combinados, incluindo capa dos anúncios com foto.
+- [x] RF08 e RF14: código de detalhes e mapas para objetos e pontos, com fotos nos objetos; mapa web, seleção, confirmação de coordenadas e preservação ao recriar a tela validados no emulador. Fluxo completo com objetos reais ainda pendente de validação.
+- [x] RF10: inventário do próprio ponto com filtros por situação implementado; verificar implantação e aceite.
+- [x] RF11–RF12: código de entrega com descrição, uma a cinco fotos e atualização atômica implementado; verificar implantação e aceite.
+- [x] RF13: histórico e acesso privado aos comprovantes implementados; verificar implantação e aceite.
 - [ ] RNF01–RNF06: interface, persistência, permissões e feedback.
 - [ ] Seção 9: validações, estados vazios e tratamento de falhas.
 - [x] RF15: captura com câmera externa e FileProvider implementada; validação manual em aparelho pendente.
-- [ ] RF16: cache Room de objetos e pontos, além do perfil.
+- [x] RF16: armazenamento Room somente do perfil confirmado, com limpeza ao sair; objetos e pontos fora do escopo do cache.
 - [ ] CA01–CA13: execução e registro dos resultados dos cenários de aceite.
 - [x] RF17: código de pré-seleção opcional e botão de localização atual; validação no emulador registrada no andamento.
 
@@ -247,9 +246,12 @@ O cadastro de objeto oferecerá captura pela câmera e seleção pela galeria. O
 O nome definitivo do aplicativo e seu estilo visual podem ser definidos durante o desenvolvimento, sem alterar estes requisitos. O desenvolvimento foi iniciado com o projeto Android, login, cadastro e estrutura de cache de perfil. Recursos ainda não concluídos permanecem no checklist. A configuração e publicação dos serviços externos dependem do projeto Firebase e das chaves do responsável.
 
 
+
+O inventário consulta o servidor por ponto e situação e fica separado do catálogo global. Após entrega, a sessão atual atualiza os dados. Outras sessões atualizam ao recarregar ou retomar a lista; não há acompanhamento em tempo real. Objetos entregues e suas fotos originais só são consultáveis pelo ponto vinculado. Comprovantes não podem ser editados ou excluídos, não há reabertura nem troca de ponto.
+
 ## 14. Atendimento ao enunciado T1 e andamento
 
-O enunciado exige seis telas, navegação por Fragments com Bottom Navigation ou Drawer, duas listas de contextos distintos, MVVM, duas opções de persistência/integração e dois recursos da lista do trabalho. O app atenderá com listas de objetos e pontos (RecyclerView e Adapter), Firebase + Room e Google Maps + câmera. A navegação principal com Bottom Navigation está implementada, com listas de objetos e pontos em RecyclerView e Adapter, além da aba Conta.
+O enunciado exige seis telas, navegação por Fragments com Bottom Navigation ou Drawer, duas listas de contextos distintos, MVVM, duas opções de persistência/integração e dois recursos da lista do trabalho. O app atende com listas de objetos e pontos (RecyclerView e Adapter), Firebase + Room e Google Maps + câmera. A navegação principal com Bottom Navigation está implementada, com listas de objetos e pontos em RecyclerView e Adapter, aba Conta; pontos recebem somente Meus objetos e Conta. Room atende ao RF16 somente para perfil confirmado.
 
 ### Registro anterior — 02/11/2026
 
@@ -319,6 +321,12 @@ Durante a validação, o emulador apresentou falha de DNS; foi reiniciado com DN
 | 1.7 | 05/11/2026 | Adaptação autorizada para Maps JavaScript API em WebView com a Demo Key gratuita da D2G, sem faturamento; atualização de dependências, mensagens, validações e testes do mapa. |
 | 1.8 | 06/11/2026 | Inclusão de RF17, RN13 e CA13: localização atual opcional como pré-seleção, permissões em contexto, botão de nova tentativa e preservação da escolha manual. |
 
+| 1.9 | 06/11/2026 | Fotos opcionais em Base64 no Firestore, câmera/galeria, capa e galeria. |
+| 1.10 | 06/11/2026 | Corrigir espaço do teclado e ocultar menu durante a digitação. |
+| 1.11 | 06/11/2026 | Inventário do ponto, entrega e comprovantes privados no Firestore; RF16 limitado ao perfil Room. |
+
+| 1.12 | 06/11/2026 | Limitar o menu do ponto a Meus objetos e Conta, com entrada direta no inventário; usuário comum preserva três opções. |
+
 ### Fotos dos objetos — versão 1.9 (06/11/2026)
 
 RF04, RF05, RF08 e RF15: câmera externa e seletor de imagens do Android, sem acesso amplo à galeria. Cancelamento preserva o formulário. Prévia, contador e remoção antes da publicação; primeira foto é a capa. O app aplica o teto de cinco inclusive no seletor alternativo. Preparação em segundo plano corrige orientação EXIF, remove metadados e converte JPEG com lado maior inicial de 1.280 pixels, reduzindo qualidade/resolução para respeitar 100 KiB. Erros preservam anexos já preparados. Rotação mantém anexos no ViewModel e captura pendente; não há rascunho permanente nem recuperação após encerramento do processo.
@@ -327,7 +335,6 @@ A gravação conjunta usa o mesmo ID nas repetições. Durante confirmação inc
 
 Critérios adicionais: publicar zero/uma/cinco fotos, rejeitar sexta, respeitar limites de imagem/capa, cancelar captura sem anexo, preservar na rotação, repetir falha sem duplicação, carregar capa/detalhes de anúncios antigos e novos, bloquear leitura anônima e gravações parciais/avulsas. Publicação real e avaliação visual completa continuam dependentes da verificação manual.
 
-| 1.9 | 06/11/2026 | Fotos opcionais de anúncios em Base64 no Firestore Spark, câmera/galeria, capa, galeria e gravação atômica; comprovantes preservados fora desta etapa. |
 
 Verificação v1.9: 34 testes Java, nove Android no moto g15/Android 15, nove JavaScript e 31 cenários Firebase locais passaram; build e lint sem erros. Após autorização explícita em 06/11/2026, regras de fotos e isenções de índices de `objetos.miniaturaBase64` e `fotos.base64` foram publicadas pelo Console do Firebase, no Safari com a conta D2G. Plano Spark preservado, sem alteração de faturamento. Fluxo manual completo de publicação com fotos no projeto real ainda não validado.
 
@@ -335,6 +342,15 @@ Verificação v1.9: 34 testes Java, nove Android no moto g15/Android 15, nove Ja
 
 Na área autenticada, o menu inferior fica oculto enquanto o teclado estiver aberto e reaparece ao fechá-lo, mantendo a aba selecionada. O contêiner principal trata uma única vez os espaços das barras do sistema e do teclado; componentes filhos não repetem o preenchimento. Formulários permanecem roláveis, com os campos acessíveis durante a digitação, sem apagar dados ou anexos. Cenário de aceite: abrir um campo do cadastro de objeto ou a busca, digitar, fechar e reabrir o teclado; não há área vazia do menu nem sobreposição e a aba permanece selecionada.
 
-| 1.10 | 06/11/2026 | Corrigir duplicação do espaço do teclado e ocultar o menu inferior durante a digitação. |
 
 Verificação v1.10: build, 34 testes Java e lint passaram. No moto g15/Android 15, o cadastro ficou com 1.372 pixels úteis com o teclado aberto (antes, 247), sem a área vazia do menu. Na busca, o ciclo de abrir e fechar teclado confirmou menu oculto e retorno à altura normal de 200 pixels. Versão corrigida instalada no celular.
+
+### Inventário e entrega — versão 1.11 (06/11/2026)
+
+Implementação de RF10–RF13 e redução explícita de RF16 ao perfil confirmado. O comprovante usa Firestore/Base64 em lugar do Storage, com galeria e acesso exclusivo ao ponto. A gravação é atômica e idempotente por tentativa; a concorrência não sobrescreve entrega. Regras, índice por ponto/situação, modelos, ViewModel, inventário, formulário e detalhes privados acompanham esta alteração. A validação e a implantação estão registradas abaixo; o checklist de código não significa aceite integral de todos os cenários do aplicativo.
+
+### Navegação por perfil — versão 1.12 (06/11/2026)
+
+Por solicitação do responsável, pontos têm apenas Meus objetos e Conta e iniciam no próprio inventário. Objetos e Pontos ficam ocultos para esse perfil; telas antigas dessas abas não são restauradas como entrada do ponto. Usuários comuns mantêm Objetos, Pontos e Conta. O ajuste altera a interface e RF09; não amplia acessos no Firebase nem altera a privacidade dos comprovantes. O ponto deixa de consultar o catálogo global ao iniciar a área autenticada.
+
+Implantação autorizada concluída pelo Safari com a conta D2G: regras iguais às do repositório publicadas e índice composto de objetos por pontoId/situacao confirmado como Ativado. A isenção existente de fotos.base64 também abrange comprovantes. Spark preservado, sem faturamento. APK final instalado e aberto no celular; a sessão real do ponto exibiu Meus objetos/Conta e carregou seu inventário disponível sem erro. Entregas de registros reais não foram feitas automaticamente: o fluxo completo foi validado com dados fictícios locais e a sessão real foi preservada.

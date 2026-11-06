@@ -64,4 +64,5 @@
     <string name="save_object">Salvar objeto</string>
     <string name="go_back">Voltar</string>
     <string name="object_saved">Objeto cadastrado com sucesso.</string>
+    <string name="inventory_tab">Meus objetos</string>
 </resources>

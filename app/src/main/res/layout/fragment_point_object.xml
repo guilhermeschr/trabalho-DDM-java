@@ -1,0 +1,24 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true"><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Objeto do meu ponto" android:textAppearance="?attr/textAppearanceHeadlineMedium" />
+    <ProgressBar android:id="@+id/delivery_progress" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+    <TextView android:id="@+id/delivery_message" android:layout_width="match_parent" android:layout_height="wrap_content" android:accessibilityLiveRegion="polite" />
+    <Button android:id="@+id/delivery_retry" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Tentar novamente" />
+    <LinearLayout android:id="@+id/delivery_content" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+        <TextView android:id="@+id/delivery_object" android:layout_width="match_parent" android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceTitleMedium" />
+        <Button android:id="@+id/delivery_map" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Ver local encontrado no mapa" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Fotos do objeto" />
+        <LinearLayout android:id="@+id/delivery_original_photos" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+        <TextView android:id="@+id/delivery_receipt" android:layout_width="match_parent" android:layout_height="wrap_content" />
+        <LinearLayout android:id="@+id/delivery_receipt_photos" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+        <Button android:id="@+id/delivery_begin" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Registrar entrega" />
+        <LinearLayout android:id="@+id/delivery_form" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Descreva a retirada e selecione de uma a cinco fotos. Estes comprovantes ficam privados para o seu ponto." />
+            <EditText android:id="@+id/delivery_description" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="100dp" android:hint="Descrição da retirada" android:inputType="textCapSentences|textMultiLine" android:gravity="top" />
+            <TextView android:id="@+id/delivery_count" android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <Button android:id="@+id/delivery_pick" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Escolher comprovantes da galeria" />
+            <LinearLayout android:id="@+id/delivery_previews" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+            <Button android:id="@+id/delivery_confirm" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Confirmar entrega" />
+        </LinearLayout>
+    </LinearLayout>
+    <Button android:id="@+id/delivery_back" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Voltar" />
+</LinearLayout></ScrollView>

@@ -1,3 +1,5 @@
+**Escopo vigente em 06/11/2026:** RF16 limitado a perfil confirmado no Room. Objetos, pontos e comprovantes são consultados no Firebase. Os registros abaixo preservam o planejamento histórico; a especificação v1.11 prevalece.
+
 # Login e cadastro — plano de implementação
 
 **Configuração vigente — 05/11/2026:** este plano preserva os registros das etapas anteriores. O projeto Firebase atual é `trabalho-ddm-java-3cc2a`, na conta D2G Trabalhos, definido em `.firebaserc`, com app Android `trabalho.DDM.java`, configuração local instalada, Authentication por e-mail/senha e Firestore Standard em São Paulo com as regras do repositório publicadas. As contas e os dados anteriores não foram migrados. O app foi recompilado, instalado e aberto no emulador sem aviso de Firebase ausente; 32 testes unitários, build e lint passaram (zero erros, 16 avisos). Authentication rejeitou uma conta fictícia inexistente e Firestore negou leitura sem autenticação. Cadastro/login completos no novo projeto e Storage permanecem pendentes de validação/configuração. O mapa foi adaptado, com autorização, para Maps JavaScript API em WebView com a Demo Key gratuita da D2G instalada em `local.properties`, sem faturamento. A integração mantém seleção, marcadores, consulta sem edição e nova tentativa em caso de falha; a validação atual está registrada na especificação. Consulte a [especificação](ESPECIFICACAO-DO-APP.md) para o estado atual.
@@ -61,3 +63,11 @@ Verificação após publicação em 02/11/2026: a lista de objetos carregou sem 
 Implementadas câmera externa, seletor Android, até cinco JPEGs de 100 KiB, prévias/remover, capa até 12 KiB e galeria com ampliação. Firestore/Spark substitui Storage somente para anúncios. Gravação conjunta, regras e isenções de índice acompanham o código. Rascunhos permanentes e comprovantes de entrega ficam fora desta etapa. Verificações e limitações registradas no README.
 
 Configuração real concluída em 06/11/2026: regras de fotos e duas isenções de índice publicadas pelo Safari com a conta D2G, após autorização explícita. Nova tentativa de salvar no celular e validação visual completa permanecem pendentes.
+
+## Inventário, entrega e histórico privado
+
+RF10–RF13 implementados em Java/MVVM: inventário próprio por situação, galeria de uma a cinco fotos, entrega atômica com idempotência e histórico exclusivo do ponto. Comprovantes usam Base64 no Firestore, sem Storage ou ativação de faturamento. Atualizar regras e índice antes da disponibilização. RF16 passa a incluir somente o perfil Room. Rascunhos permanentes e edição/exclusão de entregas permanecem fora do escopo. Verificações e implantação constam no registro final da especificação.
+
+Navegação v1.12: ponto de coleta com somente Meus objetos e Conta, entrada direta no inventário; usuário comum mantém Objetos, Pontos e Conta. Ajuste documentado em RF09 e na especificação.
+
+Resultado v1.12: código de inventário/entregas/histórico concluído, RF16 limitado ao perfil, regras publicadas, índice ativado e APK instalado no moto g15. O ponto possui duas abas e o formulário preserva os dados na rotação; nenhum registro real foi entregue automaticamente.

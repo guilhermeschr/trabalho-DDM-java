@@ -28,6 +28,45 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/usuarios/$(uid)).data.nome == request.resource.data.nome;
       allow update, delete: if false;
     }
+    function pointOwner(pointId) { return request.auth != null && request.auth.uid == pointId
+      && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil == 'PONTO_COLETA'; }
+    function validPhoto() { return request.resource.data.keys().hasOnly(['base64','tipo'])
+      && request.resource.data.tipo == 'image/jpeg' && request.resource.data.base64 is string
+      && request.resource.data.base64.size()>0 && request.resource.data.base64.size()<=136536
+      && request.resource.data.base64.size()%4==0 && request.resource.data.base64.matches('[A-Za-z0-9+/]+={0,2}')
+      && (request.resource.data.base64.size()<136536 || request.resource.data.base64.matches('.*==')); }
+    match /entregas/{id} {
+      function item() { return get(/databases/$(database)/documents/objetos/$(id)).data; }
+      function itemAfter() { return getAfter(/databases/$(database)/documents/objetos/$(id)).data; }
+      function photoPresent(slot) { return getAfter(/databases/$(database)/documents/entregas/$(id)/fotos/$(slot)).data.tipo == 'image/jpeg'; }
+      function validPhotos() {
+        let f=request.resource.data.fotos;
+        return f in [['0'],['0','1'],['0','1','2'],['0','1','2','3'],['0','1','2','3','4']]
+          && photoPresent('0') && (f.size()<2 || photoPresent('1')) && (f.size()<3 || photoPresent('2'))
+          && (f.size()<4 || photoPresent('3')) && (f.size()<5 || photoPresent('4'));
+      }
+      // A consulta de ID ainda ausente é necessária à transação de primeira entrega.
+      allow get: if pointOwner(item().pontoId);
+      allow list: if pointOwner(resource.data.pontoId);
+      allow create: if pointOwner(request.resource.data.pontoId)
+        && request.resource.data.keys().hasAll(['objetoId','pontoId','responsavelUid','descricao','operacaoId','criadoEm','fotos'])
+        && request.resource.data.keys().hasOnly(['objetoId','pontoId','responsavelUid','descricao','operacaoId','criadoEm','fotos'])
+        && request.resource.data.objetoId==id && request.resource.data.responsavelUid==request.auth.uid
+        && request.resource.data.descricao is string && request.resource.data.descricao.matches('(?s).*\\S.*')
+        && request.resource.data.operacaoId is string && request.resource.data.operacaoId.size()>0
+        && request.resource.data.operacaoId.size()<=100 && request.resource.data.criadoEm==request.time
+        && item().pontoId==request.auth.uid && item().situacao=='DISPONIVEL'
+        && itemAfter().situacao=='ENTREGUE' && validPhotos();
+      allow update, delete: if false;
+      match /fotos/{slot} {
+        function receipt() { return get(/databases/$(database)/documents/entregas/$(id)).data; }
+        function afterReceipt() { return getAfter(/databases/$(database)/documents/entregas/$(id)).data; }
+        allow read: if pointOwner(receipt().pontoId);
+        allow create: if request.auth!=null && !exists(/databases/$(database)/documents/entregas/$(id))
+          && afterReceipt().pontoId==request.auth.uid && slot in afterReceipt().fotos && validPhoto();
+        allow update, delete: if false;
+      }
+    }
     match /objetos/{id} {
       function signedIn() { return request.auth != null; }
       function commonUser() {
@@ -42,20 +81,17 @@ service cloud.firestore {
           && (f.size()<3 || photoPresent('2')) && (f.size()<4 || photoPresent('3')) && (f.size()<5 || photoPresent('4'));
       }
       match /fotos/{slot} {
-        allow read: if request.auth != null && get(/databases/$(database)/documents/objetos/$(id)).data.situacao == 'DISPONIVEL';
+        allow read: if request.auth != null && (get(/databases/$(database)/documents/objetos/$(id)).data.situacao == 'DISPONIVEL' || pointOwner(get(/databases/$(database)/documents/objetos/$(id)).data.pontoId));
         allow create: if request.auth != null
           && !exists(/databases/$(database)/documents/objetos/$(id))
           && getAfter(/databases/$(database)/documents/objetos/$(id)).data.autorUid == request.auth.uid
           && slot in getAfter(/databases/$(database)/documents/objetos/$(id)).data.fotos
-          && request.resource.data.keys().hasOnly(['base64','tipo'])
-          && request.resource.data.tipo == 'image/jpeg'
-          && request.resource.data.base64 is string && request.resource.data.base64.size()>0
-          && request.resource.data.base64.size()<=136536;
+          && validPhoto();
         allow update, delete: if false;
       }
-      allow list: if signedIn() && resource.data.situacao == 'DISPONIVEL';
+      allow list: if signedIn() && (resource.data.situacao == 'DISPONIVEL' || pointOwner(resource.data.pontoId));
       // A leitura de ID ausente permite a transação de criação sem escrita offline.
-      allow get: if signedIn() && (!exists(/databases/$(database)/documents/objetos/$(id)) || resource.data.situacao == 'DISPONIVEL');
+      allow get: if signedIn() && (!exists(/databases/$(database)/documents/objetos/$(id)) || resource.data.situacao == 'DISPONIVEL' || pointOwner(resource.data.pontoId));
       allow create: if commonUser()
         && request.resource.data.keys().hasAll(['nome', 'descricao', 'localAproximado', 'latitude', 'longitude', 'pontoId', 'autorUid', 'situacao', 'fotos', 'criadoEm'])
         && request.resource.data.keys().hasOnly(['nome', 'descricao', 'localAproximado', 'latitude', 'longitude', 'pontoId', 'autorUid', 'situacao', 'fotos', 'criadoEm', 'miniaturaBase64'])
@@ -73,7 +109,13 @@ service cloud.firestore {
           || (request.resource.data.miniaturaBase64 is string && request.resource.data.miniaturaBase64.size()<=16384
             && (request.resource.data.fotos.size()==0 || request.resource.data.miniaturaBase64.size()>0)))
         && request.resource.data.criadoEm == request.time;
-      allow update, delete: if false;
+      allow update: if pointOwner(resource.data.pontoId)
+        && resource.data.situacao=='DISPONIVEL' && request.resource.data.situacao=='ENTREGUE'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['situacao'])
+        && !exists(/databases/$(database)/documents/entregas/$(id))
+        && getAfter(/databases/$(database)/documents/entregas/$(id)).data.pontoId==request.auth.uid
+        && getAfter(/databases/$(database)/documents/entregas/$(id)).data.criadoEm==request.time;
+      allow delete: if false;
     }
     match /{document=**} { allow read, write: if false; }
   }

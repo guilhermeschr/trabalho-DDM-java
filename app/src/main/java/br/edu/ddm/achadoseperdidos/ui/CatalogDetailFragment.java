@@ -33,10 +33,16 @@ public class CatalogDetailFragment extends Fragment {
         }; load[0].run();
     }
     @Override public void onDestroyView() { loadedPhotos = null; super.onDestroyView(); }
+    @Override public void onResume() { super.onResume();
+        HomeFragment home = (HomeFragment) getParentFragment();
+        if(home != null && home.catalogModel()!=null) home.catalogModel().refresh();
+    }
     @Override public void onViewCreated(@NonNull View view, Bundle saved) {
         HomeFragment home = (HomeFragment) requireParentFragment();
         CatalogViewModel model = home.catalogModel();
         if (model == null) return; // Sessão ainda sendo restaurada; a Activity exibirá a autenticação.
+        android.widget.Button deliver = new android.widget.Button(requireContext()); deliver.setText("Registrar entrega"); deliver.setVisibility(View.GONE);
+        ((android.view.ViewGroup)view.findViewById(R.id.detail_content)).addView(deliver);
         view.findViewById(R.id.detail_back).setOnClickListener(v -> home.handleBack());
         view.findViewById(R.id.detail_retry).setOnClickListener(v -> model.refresh());
         model.state().observe(getViewLifecycleOwner(), state -> {
@@ -59,7 +65,9 @@ public class CatalogDetailFragment extends Fragment {
             ((TextView)view.findViewById(R.id.detail_location)).setText(location + "\n" + getString(R.string.location_selected, lat, lng));
             view.findViewById(R.id.detail_map).setOnClickListener(v -> MapPickerDialog.create(lat, lng, true).show(getChildFragmentManager(), "map_detail"));
             view.findViewById(R.id.detail_point).setVisibility(isPoint ? View.GONE : View.VISIBLE);
+            deliver.setVisibility(!isPoint && home.deliveryModel()!=null && home.deliveryModel().owns(object.pointId)?View.VISIBLE:View.GONE);
             if (!isPoint) {
+                deliver.setOnClickListener(v -> home.open(PointObjectFragment.create(object.id,true)));
                 showPhotos(view, model, object);
                 CollectionPoint linked = model.point(object.pointId);
                 ((TextView)view.findViewById(R.id.detail_point)).setText(linked == null ? getString(R.string.point_unavailable) : getString(R.string.pickup_point, linked.name));

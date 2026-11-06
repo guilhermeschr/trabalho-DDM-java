@@ -20,7 +20,7 @@ Consulte e atualize esse documento sempre que houver uma definição ou alteraç
 3. Configure o caminho do SDK em `local.properties` (gerado pelo Studio; não versionado).
 4. Use o projeto Firebase `trabalho-ddm-java-3cc2a` (nome de exibição `trabalho-ddm-java`), da conta D2G Trabalhos, com o app Android registrado como `trabalho.DDM.java`. Coloque o arquivo baixado em `app/google-services.json` (não versionado); o arquivo correto foi instalado localmente em 05/11/2026. `.firebaserc` aponta para esse projeto. As classes Java continuam no namespace `br.edu.ddm.achadoseperdidos`.
 5. Authentication por e-mail/senha está habilitado e o Firestore Standard padrão foi criado em São Paulo (`southamerica-east1`), no plano Spark. As regras de `firestore.rules` foram publicadas nesse novo projeto em 05/11/2026. Ao usar outro projeto, aplique-as novamente. O arquivo fecha acesso aos módulos ainda não implementados; nenhuma regra é publicada automaticamente pelo build. Contas e dados do projeto anterior não foram migrados: é necessário criar uma conta pelo app para usar o novo ambiente.
-6. Para o protótipo, use a Maps Demo Key da conta D2G (projeto `gmp-demo-project-991730262`) e preencha `MAPS_API_KEY=sua-chave-demo` em `local.properties`, sem versionar o valor. O arquivo foi configurado localmente em 05/11/2026. O mapa usa Google Maps JavaScript API em WebView, sem cartão ou faturamento. Não é necessário habilitar o SDK Android nativo. Mantenha Android System WebView atualizado. Storage continua pendente.
+6. Para o protótipo, use a Maps Demo Key da conta D2G (projeto `gmp-demo-project-991730262`) e preencha `MAPS_API_KEY=sua-chave-demo` em `local.properties`, sem versionar o valor. O arquivo foi configurado localmente em 05/11/2026. O mapa usa Google Maps JavaScript API em WebView, sem cartão ou faturamento. Não é necessário habilitar o SDK Android nativo. Mantenha Android System WebView atualizado. Storage não é usado nesta configuração.
 7. Selecione o módulo `app` e execute em emulador ou aparelho. Sem configuração Firebase, o app compila e abre, mas informa a configuração pendente e não simula login.
 
 O plugin Google Services só é aplicado quando o JSON existir; após adicioná-lo, sincronize e recompile. Se o Android Studio mostrar `Activity class ... does not exist` com o identificador antigo `br.edu.ddm.achadoseperdidos`, execute **Sync Project with Gradle Files** e rode o módulo `app` novamente; o applicationId atual é `trabalho.DDM.java`. Para consultar a assinatura de desenvolvimento: `./gradlew signingReport`.
@@ -33,9 +33,9 @@ Maps em 05/11/2026: por autorização do responsável, o SDK nativo foi substitu
 - `auth`: ViewModel, estados, validação e interface de repositório; implementação Firebase.
 - `data`: entidade, DAO e banco Room de cache de perfil, sem senhas.
 
-A área autenticada possui Bottom Navigation (Objetos, Pontos e Conta), duas listas com RecyclerView/Adapter, detalhes com acesso ao mapa e cadastro de objeto sem fotos para usuário comum. Busca por nome e filtro por ponto funcionam juntos. O cadastro exige um ponto existente e a orientação de deixar o objeto no local antes de anunciar. Atualizar recarrega os dados do servidor.
+A área autenticada possui Bottom Navigation por perfil (Objetos/Pontos/Conta para comuns; Meus objetos/Conta para pontos), duas listas com RecyclerView/Adapter, detalhes com acesso ao mapa e cadastro de objeto com fotos opcionais para usuário comum. Busca por nome e filtro por ponto funcionam juntos. O cadastro exige um ponto existente e a orientação de deixar o objeto no local antes de anunciar. Atualizar recarrega os dados do servidor.
 
-O pacote `catalog` contém CatalogViewModel, validações e o repositório Firestore. A criação de objeto usa transação online e um ID reutilizado em tentativas para evitar duplicação. Fotos/câmera/Storage, inventário, entregas, histórico e cache de objetos/pontos continuam pendentes. Room armazena apenas perfis; não permite autenticação ou entregas offline.
+O pacote `catalog` contém CatalogViewModel, validações e o repositório Firestore. A criação de objeto usa transação online e um ID reutilizado em tentativas para evitar duplicação. Fotos e câmera estão implementadas. O pacote delivery adiciona inventário próprio, entrega e histórico privado. Não há cache Room de objetos/pontos nem uso do Storage. Room armazena apenas perfis; não permite autenticação ou entregas offline.
 
 ## Verificações
 
@@ -84,3 +84,11 @@ Até cinco fotos opcionais via câmera ou seletor de imagens, comprimidas em JPE
 A transação publica anúncio e anexos juntos. Repetição mantém ID e conteúdo enquanto houver confirmação pendente; encerramento do processo não preserva rascunhos. Comprovantes de entrega continuam fora desta implementação.
 
 Verificação desta etapa: 34 testes Java, nove testes Android no moto g15 (Android 15), nove testes JavaScript e 31 cenários de regras Firebase passaram. Build e lint concluíram sem erros. Os testes Android cobrem compressão, orientação EXIF, remoção de localização, FileProvider e cancelamento do contrato de câmera; seleção/captura e publicação reais completas ainda exigem validação manual. Em 06/11/2026, após autorização explícita, as regras e as duas isenções de índices foram publicadas pelo Console do Firebase no Safari com a conta D2G. A ferramenta local usa uma conta pessoal sem permissão neste projeto; para futuros deploys pela CLI, autenticar a conta autorizada.
+
+## Inventário e comprovantes privados
+
+Pontos de coleta têm somente **Meus objetos** e **Conta**, iniciando em Meus objetos, com Disponíveis/Entregues. Só o ponto vinculado registra retirada: descrição e de uma a cinco fotos pela galeria. A entrega, as fotos Base64 e a mudança para ENTREGUE são gravadas em uma transação. Reenvios usam operacaoId; outra sessão não sobrescreve comprovantes existentes. O histórico exige acesso do próprio ponto. Nenhum comprovante fica no anúncio público ou no Room.
+
+RF16 agora inclui **somente perfil confirmado** no Room, apagado ao sair; não há cache Room de objetos/pontos/comprovantes, login offline ou fila de entregas. Cloud Storage não é utilizado; Firestore Spark continua sujeito às cotas gratuitas. Os campos Base64 de fotos públicas e privadas não são indexados. O índice de inventário está em firestore.indexes.json.
+
+Regras de entregas e índice por ponto/situação publicados e ativados no projeto Firebase da D2G em 06/11/2026, com autorização do responsável.

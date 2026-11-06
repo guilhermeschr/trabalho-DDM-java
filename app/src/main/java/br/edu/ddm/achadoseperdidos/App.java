@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import br.edu.ddm.achadoseperdidos.auth.*;
 import br.edu.ddm.achadoseperdidos.data.AppDatabase;
 public class App extends Application {
+    private br.edu.ddm.achadoseperdidos.delivery.DeliveryRepository deliveries;
     private AuthRepository auth;
     private CatalogRepository catalog;
     @Override public void onCreate() {
@@ -24,10 +25,12 @@ public class App extends Application {
             FirebaseFirestore store = FirebaseFirestore.getInstance();
             // Room é o cache explícito; perfis autorizadores não dependem do cache automático do Firestore.
             store.setFirestoreSettings(new FirebaseFirestoreSettings.Builder().setPersistenceEnabled(false).build());
+            deliveries = new br.edu.ddm.achadoseperdidos.delivery.FirebaseDeliveryRepository(store, FirebaseAuth.getInstance());
             catalog = new FirebaseCatalogRepository(store, FirebaseAuth.getInstance());
             auth = new FirebaseAuthRepository(FirebaseAuth.getInstance(), store, db.profiles(), Executors.newSingleThreadExecutor());
         }
     }
     public CatalogRepository catalog() { return catalog; }
+    public br.edu.ddm.achadoseperdidos.delivery.DeliveryRepository deliveries() { return deliveries; }
     public AuthRepository auth() { return auth; }
 }
